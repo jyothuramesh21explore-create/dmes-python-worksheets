@@ -3,793 +3,628 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Python Mission 1: Console & Strings</title>
+    <title>Python Lesson 1: Introduction to Console Output & Strings</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --bg-dark: #0f172a;
-            --panel-bg: #1e293b;
-            --accent-blue: #3b82f6;
-            --accent-green: #10b981;
-            --accent-red: #ef4444;
-            --text-main: #f8fafc;
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            scroll-behavior: smooth;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code:wght@400;600&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; color: #1f2937; }
         .code-font { font-family: 'Fira Code', monospace; }
         
+        /* Custom Scrollbar for Sandboxes */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+
         .section-card {
-            background-color: var(--panel-bg);
-            border: 1px solid #334155;
-            border-radius: 1rem;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-            transition: border-color 0.3s ease;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
         }
         .section-card.active-section {
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
-        }
-        
-        .timer-badge {
-            background: #334155;
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-weight: 600;
-            font-size: 0.875rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .timer-badge.warning { color: #f59e0b; }
-        .timer-badge.danger { color: #ef4444; animation: pulse 1s infinite; }
-        
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
+            border-color: #3b82f6;
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.2);
         }
 
-        .vocab-btn.selected { background-color: var(--accent-blue); border-color: var(--accent-blue); }
-        .vocab-btn.matched { background-color: var(--accent-green); border-color: var(--accent-green); cursor: default; opacity: 0.8; }
-        .vocab-btn.error { background-color: var(--accent-red); border-color: var(--accent-red); }
-
-        .console-output {
-            background: #000;
-            color: #10b981;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            white-space: pre-wrap;
-            min-height: 80px;
-        }
-
+        /* Print Media Queries for PDF Export */
         @media print {
-            body { background: white; color: black; }
-            .section-card { background: white; border: 1px solid #ccc; box-shadow: none; break-inside: avoid; margin-bottom: 1rem; }
+            body { background-color: white; color: black; }
             .no-print { display: none !important; }
             .print-only { display: block !important; }
-            textarea { border: none; resize: none; overflow: hidden; height: auto !important; background: transparent; }
-            .console-output { background: #f3f4f6; color: black; border: 1px solid #ccc; }
-            .text-emerald-400, .text-blue-400, .text-yellow-400 { color: black !important; font-weight: bold; }
+            .section-card { border: 1px solid #ccc; break-inside: avoid; margin-bottom: 20px; box-shadow: none; }
+            textarea { display: none; }
+            .print-textarea-content { display: block !important; white-space: pre-wrap; font-family: inherit; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }
+            .bg-gray-900 { background-color: #f3f4f6 !important; color: #000 !important; }
+            .text-white { color: #000 !important; }
+            .text-green-400 { color: #166534 !important; }
+            .text-red-400 { color: #991b1b !important; }
+            .text-blue-400 { color: #1e3a8a !important; }
+            .text-yellow-400 { color: #854d0e !important; }
+            #dashboard { break-inside: avoid; page-break-before: always; }
         }
-        
-        /* Direct PDF Export Styling overrides */
-        .pdf-export-mode { background: white !important; color: black !important; }
-        .pdf-export-mode .section-card { background: white !important; border: 1px solid #ccc !important; box-shadow: none !important; margin-bottom: 1rem !important; }
-        .pdf-export-mode .no-print { display: none !important; }
-        .pdf-export-mode .print-only { display: block !important; }
-        .pdf-export-mode textarea { border: none !important; resize: none !important; overflow: hidden !important; height: auto !important; background: transparent !important; color: black !important; }
-        .pdf-export-mode input { border: none !important; background: transparent !important; color: black !important; font-weight: bold; }
-        .pdf-export-mode select { border: none !important; background: transparent !important; color: black !important; font-weight: bold; appearance: none;}
-        .pdf-export-mode .console-output { background: #f3f4f6 !important; color: black !important; border: 1px solid #ccc !important; }
-        .pdf-export-mode .text-emerald-400, .pdf-export-mode .text-blue-400, .pdf-export-mode .text-yellow-400 { color: black !important; font-weight: bold !important; }
-        .pdf-export-mode .bg-slate-800, .pdf-export-mode .bg-slate-900 { background-color: white !important; border-color: #ccc !important; }
-
         .print-only { display: none; }
-        
-        /* Floating Score */
-        #floating-score {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(15, 23, 42, 0.9);
-            border: 2px solid var(--accent-green);
-            padding: 10px 20px;
-            border-radius: 999px;
-            z-index: 50;
-            backdrop-filter: blur(5px);
-            font-weight: bold;
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
-        }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4 md:p-8 max-w-5xl mx-auto pb-32">
 
-    <!-- Iframe Sandbox Warning Modal (Fallback) -->
-    <div id="iframe-warning" class="hidden fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-slate-900 border-2 border-red-500 p-6 rounded-xl shadow-2xl z-[100] text-center max-w-md w-full no-print">
-        <h3 class="text-2xl font-bold text-red-400 mb-4">⚠️ Download Blocked</h3>
-        <p class="text-white mb-4">Google Sites prevents automatic file downloads inside embedded code.</p>
-        <p class="text-emerald-400 font-bold mb-4 text-lg">How to save your work manually:</p>
-        <div class="bg-slate-800 p-4 rounded text-left mb-6">
-            <ol class="text-gray-300 list-decimal pl-5 space-y-2 font-semibold">
-                <li><strong class="text-white">Right-click</strong> anywhere on this page.</li>
-                <li>Select <strong class="text-blue-400">"Print..."</strong> from the menu.</li>
-                <li>Change Destination to <strong class="text-emerald-400">"Save as PDF"</strong>.</li>
-                <li>Click <strong class="text-white">Save</strong>!</li>
-            </ol>
+    <!-- Floating Status Bar -->
+    <div class="fixed top-4 right-4 z-50 flex gap-4 no-print">
+        <div class="bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg font-bold flex items-center gap-2">
+            <i class="fa-solid fa-clock"></i> <span id="global-timer">00:00</span>
         </div>
-        <button onclick="document.getElementById('iframe-warning').classList.add('hidden')" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-6 rounded-full w-full">I Understand</button>
+        <div class="bg-green-600 text-white px-4 py-2 rounded-full shadow-lg font-bold flex items-center gap-2">
+            <i class="fa-solid fa-star"></i> <span id="score-display">0</span> / 50 XP
+        </div>
     </div>
 
-    <div id="floating-score" class="no-print text-xl">
-        ⭐ XP: <span id="current-score">0</span> / <span id="max-score">100</span>
-    </div>
-
-    <header class="max-w-4xl mx-auto mb-8 text-center">
-        <div class="inline-block bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-bold mb-4 uppercase tracking-wider">Grade 10 : Programming</div>
-        <h1 class="text-4xl md:text-5xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">Mission 1: Console & Strings</h1>
-        <p class="text-gray-400 text-lg">Initialize your terminal. It's time to speak to the machine.</p>
+    <!-- Header -->
+    <header class="bg-white rounded-xl shadow-md p-6 mb-8 border-t-8 border-blue-600">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800"><i class="fa-brands fa-python text-blue-500"></i> Python Lesson 1</h1>
+                <p class="text-gray-600 text-lg">Introduction to Console Output & Strings</p>
+            </div>
+            <div class="mt-4 md:mt-0 text-right">
+                <span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm font-semibold">Grade 10 Computer Science</span>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Student Name</label>
+                <input type="text" id="student-name" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500" placeholder="Type your name...">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Class / Section</label>
+                <input type="text" id="student-class" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500" placeholder="e.g., 10A">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Date</label>
+                <input type="date" id="student-date" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500">
+            </div>
+        </div>
     </header>
 
-    <main class="max-w-4xl mx-auto">
-        
-        <section class="section-card" id="sec-intro" onclick="activateSection('sec-intro')">
-            <h2 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2">📋 Agent Registration</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-semibold mb-1 text-gray-300">Agent Name (Student)</label>
-                    <input type="text" id="student-name" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white focus:outline-none focus:border-blue-500" placeholder="Enter full name...">
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold mb-1 text-gray-300">Squad (Class Section)</label>
-                    <select id="student-class" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white focus:outline-none focus:border-blue-500">
-                        <option value="" disabled selected>Select your section...</option>
-                        <option value="10A">10A</option>
-                        <option value="10B">10B</option>
-                        <option value="10C">10C</option>
-                        <option value="10F">10F</option>
-                        <option value="10G">10G</option>
-                        <option value="10H">10H</option>
-                    </select>
-                </div>
+    <!-- SECTION 1: Mission Launch (Entry) -->
+    <section class="section-card bg-white rounded-xl shadow-md p-6 mb-8" data-section="entry">
+        <div class="flex justify-between items-center mb-4 border-b pb-2">
+            <h2 class="text-xl font-bold text-blue-700"><i class="fa-solid fa-rocket mr-2"></i> Mission Launch (Entry)</h2>
+            <span class="text-sm bg-gray-200 text-gray-700 px-2 py-1 rounded timer-badge" id="badge-entry">⏱ 0m 0s</span>
+        </div>
+        <div class="flex flex-col md:flex-row gap-6 items-center">
+            <div class="flex-1 text-center bg-blue-50 p-4 rounded-lg">
+                <i class="fa-solid fa-person-chalkboard text-4xl text-blue-400 mb-2"></i>
+                <i class="fa-solid fa-arrow-right-arrow-left text-2xl text-gray-400 mx-4"></i>
+                <i class="fa-solid fa-computer text-4xl text-gray-600 mb-2"></i>
+                <p class="font-semibold mt-2">If humans use mouths to communicate, how does a computer 'speak' to us?</p>
             </div>
-        </section>
+            <div class="flex-1 w-full">
+                <textarea id="entry-response" rows="3" class="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500" placeholder="Type your idea here..."></textarea>
+                <div class="print-textarea-content print-only" id="print-entry-response"></div>
+            </div>
+        </div>
+    </section>
 
-        <section class="section-card relative" id="sec-hook" onclick="activateSection('sec-hook')" data-time="120">
-            <div class="absolute top-4 right-4 timer-badge" id="timer-sec-hook">⏱️ 02:00</div>
-            <h2 class="text-2xl font-bold mb-2 text-blue-400">1. Mission Launch</h2>
-            <p class="text-gray-400 mb-4 italic">"If humans use mouths to communicate, how does a computer 'speak' to us?"</p>
-            
-            <div class="flex flex-col md:flex-row gap-6 items-center justify-center mb-6">
-                <div class="bg-slate-800 p-4 rounded-xl flex-1 text-center border border-slate-700">
-                    <div class="text-5xl mb-2">🗣️</div>
-                    <p class="font-semibold">Human Speech</p>
-                </div>
-                <div class="text-2xl text-gray-500 font-bold">VS</div>
-                <div class="bg-slate-800 p-4 rounded-xl flex-1 text-center border border-slate-700">
-                    <div class="text-5xl mb-2">💻</div>
-                    <p class="font-semibold">Computer Output</p>
-                </div>
-            </div>
-            
-            <label class="block text-sm font-semibold mb-2">Hypothesize: How do you think we force the computer to display words on the screen?</label>
-            <textarea class="w-full bg-slate-800 border border-slate-600 rounded p-3 text-white focus:outline-none focus:border-blue-500 h-24" placeholder="Type your ideas here..." oninput="awardPoints('hook', 5)"></textarea>
-            <div id="feedback-hook" class="text-emerald-400 text-sm mt-2 hidden">✓ Hypothesis recorded! +5 XP</div>
-        </section>
-
-        <section class="section-card relative" id="sec-tsw" onclick="activateSection('sec-tsw')" data-time="120">
-            <div class="absolute top-4 right-4 timer-badge" id="timer-sec-tsw">⏱️ 02:00</div>
-            <h2 class="text-2xl font-bold mb-4 text-blue-400">2. Mission Briefing (The Student Will...)</h2>
-            <div class="bg-slate-800 rounded p-4 border-l-4 border-emerald-500 mb-4">
-                <h3 class="font-bold text-emerald-400 mb-2">🎯 Learning Objective:</h3>
-                <p>Write Python code using the <code class="code-font bg-slate-900 px-1 rounded">print()</code> function to display string output to the console.</p>
-            </div>
-            <h3 class="font-bold text-gray-300 mb-2">✅ Success Criteria (Check off as you complete them):</h3>
-            <div class="space-y-2">
-                <label class="flex items-center space-x-3 cursor-pointer">
-                    <input type="checkbox" class="w-5 h-5 text-blue-600 rounded border-gray-600 bg-gray-700 focus:ring-blue-600" onchange="awardPoints('sc1', 2)">
-                    <span>I understand what a console is.</span>
-                </label>
-                <label class="flex items-center space-x-3 cursor-pointer">
-                    <input type="checkbox" class="w-5 h-5 text-blue-600 rounded border-gray-600 bg-gray-700 focus:ring-blue-600" onchange="awardPoints('sc2', 3)">
-                    <span>I can successfully output my name to the console without errors.</span>
+    <!-- SECTION 2: Mission Briefing (Objectives) -->
+    <section class="section-card bg-white rounded-xl shadow-md p-6 mb-8 border-l-4 border-green-500" data-section="briefing">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold text-gray-800"><i class="fa-solid fa-bullseye text-green-500 mr-2"></i> Mission Briefing</h2>
+            <span class="text-sm bg-gray-200 text-gray-700 px-2 py-1 rounded timer-badge" id="badge-briefing">⏱ 0m 0s</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-green-50 p-4 rounded-lg">
+                <h3 class="font-bold text-green-800 mb-2">Learning Objective:</h3>
+                <label class="flex items-start gap-2 cursor-pointer">
+                    <input type="checkbox" class="mt-1 h-5 w-5 text-green-600 rounded">
+                    <span class="text-sm">Write Python code using the <code>print()</code> function to display string output to the console.</span>
                 </label>
             </div>
-        </section>
-
-        <section class="section-card relative" id="sec-vocab" onclick="activateSection('sec-vocab')" data-time="120">
-            <div class="absolute top-4 right-4 timer-badge" id="timer-sec-vocab">⏱️ 02:00</div>
-            <h2 class="text-2xl font-bold mb-2 text-blue-400">3. Code Breaker Vocabulary</h2>
-            <p class="text-gray-400 mb-4">Tap a blue Term, then tap the matching green Definition. (15 XP)</p>
-            
-            <div class="grid grid-cols-2 gap-4 text-center" id="vocab-container">
-                <!-- Logic handled in JS -->
+            <div class="bg-blue-50 p-4 rounded-lg">
+                <h3 class="font-bold text-blue-800 mb-2">Success Criteria:</h3>
+                <label class="flex items-start gap-2 cursor-pointer">
+                    <input type="checkbox" class="mt-1 h-5 w-5 text-blue-600 rounded">
+                    <span class="text-sm">I can successfully output my name and a sentence to the console without syntax errors.</span>
+                </label>
             </div>
-            <p id="vocab-feedback" class="text-center mt-4 font-bold h-6 text-emerald-400"></p>
-        </section>
+        </div>
+    </section>
 
-        <section class="section-card relative" id="sec-donow" onclick="activateSection('sec-donow')" data-time="240">
-            <div class="absolute top-4 right-4 timer-badge" id="timer-sec-donow">⏱️ 04:00</div>
-            <h2 class="text-2xl font-bold mb-4 text-blue-400">4. Do Now! Syntax Scramble</h2>
-            <p class="mb-4">Analyze the broken Python command below before we officially learn it.</p>
-            
-            <div class="bg-red-900/30 border border-red-500 rounded p-4 mb-6 flex justify-center items-center">
-                <code class="code-font text-2xl text-red-400 tracking-wider">Print(Hello World"</code>
+    <!-- SECTION 3: Do Now! -->
+    <section class="section-card bg-white rounded-xl shadow-md p-6 mb-8" data-section="donow">
+        <div class="flex justify-between items-center mb-4 border-b pb-2">
+            <h2 class="text-xl font-bold text-purple-700"><i class="fa-solid fa-bolt mr-2"></i> Do Now: Syntax Scramble!</h2>
+            <div class="flex items-center gap-4">
+                <span class="text-sm font-bold text-green-600 bg-green-100 px-2 py-1 rounded no-print">10 XP</span>
+                <span class="text-sm bg-gray-200 text-gray-700 px-2 py-1 rounded timer-badge" id="badge-donow">⏱ 0m 0s</span>
             </div>
-
-            <div class="grid grid-cols-1 gap-4">
-                <div>
-                    <label class="block text-sm font-semibold mb-1">What will <span class="text-blue-400">occur</span> if this runs?</label>
-                    <input type="text" class="donow-input w-full bg-slate-800 border border-slate-600 rounded p-2 text-white" placeholder="E.g., It will work, It will break...">
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold mb-1">What is the <span class="text-blue-400">cause</span> of the issue?</label>
-                    <input type="text" class="donow-input w-full bg-slate-800 border border-slate-600 rounded p-2 text-white" placeholder="Identify the typos...">
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold mb-1">What is the <span class="text-blue-400">consequence</span> in the console?</label>
-                    <input type="text" class="donow-input w-full bg-slate-800 border border-slate-600 rounded p-2 text-white" placeholder="E.g., An error message...">
-                </div>
-                <button onclick="checkDoNow()" class="no-print bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition w-full md:w-auto self-start mt-2">Submit Analysis</button>
-                <div id="donow-feedback" class="text-emerald-400 hidden font-bold">✓ Great analysis! (Capital 'P', missing starting quote, missing parenthesis causes a Syntax Error). +10 XP</div>
+        </div>
+        <p class="mb-4">Vocabulary Focus: <strong>Occur</strong>, <strong>Cause</strong>, <strong>Consequence</strong>.</p>
+        <div class="bg-gray-900 rounded-lg p-4 mb-4 text-center">
+            <code class="code-font text-red-400 text-xl">Print(Hello World"</code>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+                <label class="block text-sm font-semibold mb-1">What will <strong>occur</strong>?</label>
+                <select id="donow-occur" class="w-full p-2 border rounded bg-gray-50">
+                    <option value="">Select an option...</option>
+                    <option value="run">It will run perfectly</option>
+                    <option value="error">An error will occur</option>
+                    <option value="freeze">The computer will freeze</option>
+                </select>
+                <div class="print-textarea-content print-only" id="print-donow-occur"></div>
             </div>
-        </section>
-
-        <section class="section-card relative" id="sec-ido" onclick="activateSection('sec-ido')" data-time="600">
-            <div class="absolute top-4 right-4 timer-badge" id="timer-sec-ido">⏱️ 10:00</div>
-            <h2 class="text-2xl font-bold mb-4 text-blue-400">5. Data Uplink (Teacher Modeler)</h2>
-            <p class="mb-4">The <strong class="text-emerald-400">console</strong> is the computer's display window. <br>To make the computer talk, we use the built-in function <code class="code-font bg-slate-800 px-1">print()</code>.<br>Text must be wrapped in quotes <code class="code-font bg-slate-800 px-1">""</code> to be recognized as a <strong>String</strong>.</p>
-            
-            <div class="bg-slate-900 rounded-lg overflow-hidden border border-slate-700">
-                <div class="bg-slate-800 px-4 py-2 border-b border-slate-700 flex justify-between items-center">
-                    <span class="text-sm text-gray-400 font-mono">main.py</span>
-                    <button onclick="runTeacherDemo()" class="no-print bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-1 px-3 rounded flex items-center gap-1">▶ Run Code</button>
-                </div>
-                <div class="p-4 code-font text-lg">
-                    <span class="text-blue-400">print</span><span class="text-yellow-400">(</span><span class="text-emerald-400">"Hello, Grade 10!"</span><span class="text-yellow-400">)</span>
-                </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1">Identify the <strong>cause</strong>:</label>
+                <textarea id="donow-cause" rows="2" class="w-full p-2 border rounded" placeholder="What is wrong with the code?"></textarea>
+                <div class="print-textarea-content print-only" id="print-donow-cause"></div>
             </div>
-            
-            <div class="mt-4">
-                <label class="block text-sm font-semibold mb-1 text-gray-400">Console Output:</label>
-                <div id="demo-console" class="console-output">Waiting for execution...</div>
+            <div>
+                <label class="block text-sm font-semibold mb-1">State the <strong>consequence</strong>:</label>
+                <textarea id="donow-consequence" rows="2" class="w-full p-2 border rounded" placeholder="What happens in the console?"></textarea>
+                <div class="print-textarea-content print-only" id="print-donow-consequence"></div>
             </div>
-        </section>
+        </div>
+        <button onclick="checkDoNow()" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 no-print transition w-full md:w-auto">Submit Analysis</button>
+        <div id="donow-feedback" class="mt-3 text-sm font-semibold hidden"></div>
+    </section>
 
-        <section class="section-card relative" id="sec-wedo" onclick="activateSection('sec-wedo')" data-time="420">
-            <div class="absolute top-4 right-4 timer-badge" id="timer-sec-wedo">⏱️ 07:00</div>
-            <h2 class="text-2xl font-bold mb-4 text-blue-400">6. Guided Simulation (We Do)</h2>
-            <p class="mb-2">Let's print our school name together. Oh no, there's a bug! Run the code to see the error, then fix the code to proceed.</p>
-            
-            <div class="bg-slate-900 rounded-lg overflow-hidden border border-slate-700 mb-4">
-                <textarea id="wedo-code" class="w-full bg-slate-900 text-white code-font p-4 focus:outline-none resize-none h-20 text-lg" spellcheck="false">print("DMES)</textarea>
-                <div class="bg-slate-800 px-4 py-2 flex justify-between items-center border-t border-slate-700">
-                    <button onclick="runWeDo()" class="no-print bg-blue-600 hover:bg-blue-500 text-white font-bold py-1 px-4 rounded">Test Code</button>
-                    <span id="wedo-status" class="text-sm font-bold"></span>
-                </div>
-            </div>
-            
-            <div class="console-output" id="wedo-console"></div>
-        </section>
-
-        <section class="section-card relative" id="sec-youdo" onclick="activateSection('sec-youdo')" data-time="600">
-            <div class="absolute top-4 right-4 timer-badge" id="timer-sec-youdo">⏱️ 10:00</div>
-            <h2 class="text-2xl font-bold mb-2 text-blue-400">7. Independent Lab (You Do)</h2>
-            <p class="mb-4">Task: Create a "Digital Name Tag" for a Smart City convention in Dubai. <br>
-                Requirement 1: Print your name on line 1.<br>
-                Requirement 2: Print your favorite hobby on line 2.<br>
-                Requirement 3: Print a 3-line ASCII art shape (e.g., a smiley face `:-)` ) on lines 3-5.
-            </p>
-
-            <div class="bg-slate-900 rounded-lg overflow-hidden border border-slate-700 mb-4 shadow-xl">
-                <div class="flex items-center px-4 py-2 bg-slate-800 border-b border-slate-700 gap-2">
-                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
-                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
-                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
-                    <span class="ml-2 text-xs text-gray-400 font-mono">nametag.py</span>
-                </div>
-                <div class="flex">
-                    <div class="bg-slate-800 text-gray-500 p-4 code-font text-right select-none border-r border-slate-700" style="min-width: 2.5rem;">
-                        1<br>2<br>3<br>4<br>5
-                    </div>
-                    <textarea id="youdo-code" class="w-full bg-slate-900 text-gray-100 code-font p-4 focus:outline-none resize-none h-40 text-lg leading-relaxed" spellcheck="false"># Write your code below!
-
-</textarea>
-                </div>
-                <div class="bg-slate-800 px-4 py-2 border-t border-slate-700 flex justify-end">
-                    <button onclick="runYouDo()" class="no-print bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-6 rounded shadow-lg flex items-center gap-2">
-                        <span>▶</span> Execute Sequence
-                    </button>
-                </div>
-            </div>
-            
-            <div class="mt-4">
-                <label class="block text-sm font-semibold mb-1 text-gray-400">Terminal Output:</label>
-                <div id="youdo-console" class="console-output border border-slate-700"></div>
-            </div>
-        </section>
-
-        <section class="section-card relative" id="sec-quiz" onclick="activateSection('sec-quiz')" data-time="300">
-            <div class="absolute top-4 right-4 timer-badge" id="timer-sec-quiz">⏱️ 05:00</div>
-            <h2 class="text-2xl font-bold mb-4 text-blue-400">8. Bug Hunter (Progress Check)</h2>
-            <p class="mb-4">Spot the correct code. (10 XP each)</p>
-
-            <div class="space-y-6" id="quiz-container">
-                <!-- Q1 -->
-                <div class="bg-slate-800 p-4 rounded border border-slate-600">
-                    <p class="font-bold mb-3">1. Which line of code will output exactly: <span class="text-emerald-400">Python</span></p>
-                    <div class="space-y-2">
-                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-slate-700 rounded transition">
-                            <input type="radio" name="q1" value="wrong" class="text-blue-600">
-                            <code class="code-font">Print("Python")</code>
-                        </label>
-                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-slate-700 rounded transition">
-                            <input type="radio" name="q1" value="correct" class="text-blue-600">
-                            <code class="code-font">print("Python")</code>
-                        </label>
-                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-slate-700 rounded transition">
-                            <input type="radio" name="q1" value="wrong" class="text-blue-600">
-                            <code class="code-font">print(Python)</code>
-                        </label>
-                    </div>
-                </div>
-                
-                <!-- Q2 -->
-                <div class="bg-slate-800 p-4 rounded border border-slate-600">
-                    <p class="font-bold mb-3">2. What is missing in this code: <code class="code-font text-red-400">print("Hello)</code></p>
-                    <div class="space-y-2">
-                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-slate-700 rounded transition">
-                            <input type="radio" name="q2" value="wrong" class="text-blue-600">
-                            <span>A capital P</span>
-                        </label>
-                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-slate-700 rounded transition">
-                            <input type="radio" name="q2" value="wrong" class="text-blue-600">
-                            <span>Parentheses</span>
-                        </label>
-                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-slate-700 rounded transition">
-                            <input type="radio" name="q2" value="correct" class="text-blue-600">
-                            <span>A closing string quote</span>
-                        </label>
-                    </div>
-                </div>
-                
-                <button onclick="checkQuiz()" class="no-print bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded transition w-full">Verify Answers</button>
-                <div id="quiz-feedback" class="font-bold mt-2 text-center whitespace-pre-line"></div>
-            </div>
-        </section>
-
-        <section class="section-card relative" id="sec-exit" onclick="activateSection('sec-exit')" data-time="120">
-            <div class="absolute top-4 right-4 timer-badge" id="timer-sec-exit">⏱️ 02:00</div>
-            <h2 class="text-2xl font-bold mb-4 text-blue-400">9. Mission Debrief</h2>
-            
-            <label class="block text-sm font-semibold mb-2">Reflect: What is one consequence of forgetting a quotation mark?</label>
-            <textarea class="w-full bg-slate-800 border border-slate-600 rounded p-3 text-white focus:outline-none focus:border-blue-500 h-20 mb-4" placeholder="Today I learned..."></textarea>
-
-            <label class="block text-sm font-semibold mb-2">Confidence Meter: How comfortable are you with the print() function?</label>
-            <div class="flex gap-4 mb-4 no-print" id="confidence-meter">
-                <button class="conf-btn text-3xl opacity-50 hover:opacity-100 transition" onclick="setConfidence(1)">😖</button>
-                <button class="conf-btn text-3xl opacity-50 hover:opacity-100 transition" onclick="setConfidence(2)">😟</button>
-                <button class="conf-btn text-3xl opacity-50 hover:opacity-100 transition" onclick="setConfidence(3)">😐</button>
-                <button class="conf-btn text-3xl opacity-50 hover:opacity-100 transition" onclick="setConfidence(4)">🙂</button>
-                <button class="conf-btn text-3xl opacity-50 hover:opacity-100 transition" onclick="setConfidence(5)">🤩</button>
-            </div>
-            <p id="conf-text" class="text-sm text-emerald-400 font-bold hidden print-only">Confidence Level Recorded.</p>
-        </section>
-
-        <section class="section-card bg-slate-800 border-emerald-500" id="sec-submit">
-            <h2 class="text-3xl font-black mb-4 text-emerald-400 text-center">🏁 MISSION COMPLETE 🏁</h2>
-            
-            <div id="dashboard-summary" class="bg-slate-900 p-6 rounded-lg border border-slate-700 mb-6">
-                <!-- Populated by JS -->
-                <p class="text-center text-gray-400 italic">Click "Generate Report" to build your final dashboard.</p>
-            </div>
-
-            <div class="flex flex-col md:flex-row gap-4 justify-center no-print">
-                <button onclick="generateDashboard()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-full shadow-lg transition transform hover:scale-105">1. Generate Report</button>
-                <button onclick="prepareAndPrint()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-8 rounded-full shadow-lg transition transform hover:scale-105" id="btn-print" disabled style="opacity: 0.5;">2. Save / Export to PDF</button>
-            </div>
-        </section>
+    <!-- SECTION 4: I Do (Learn & Observe) -->
+    <section class="section-card bg-white rounded-xl shadow-md p-6 mb-8" data-section="teach">
+        <div class="flex justify-between items-center mb-4 border-b pb-2">
+            <h2 class="text-xl font-bold text-indigo-700"><i class="fa-solid fa-chalkboard-user mr-2"></i> Learn: The Syntax Map</h2>
+            <span class="text-sm bg-gray-200 text-gray-700 px-2 py-1 rounded timer-badge" id="badge-teach">⏱ 0m 0s</span>
+        </div>
+        <p class="mb-4">The <strong>Console</strong> is the computer's display window. We use the built-in function <code>print()</code> to send <strong>Strings</strong> (text) to the console.</p>
         
-    </main>
+        <div class="bg-gray-900 text-white rounded-lg p-6 font-mono text-lg mb-4 text-center code-font">
+            <span class="text-blue-400 group relative cursor-help border-b border-dashed border-blue-400">print<span class="absolute hidden group-hover:block bg-blue-100 text-blue-900 text-xs p-2 rounded -top-8 left-0 shadow w-32 font-sans">The built-in function (always lowercase)</span></span><span class="text-yellow-400 group relative cursor-help border-b border-dashed border-yellow-400">(<span class="absolute hidden group-hover:block bg-yellow-100 text-yellow-900 text-xs p-2 rounded -top-8 left-0 shadow w-32 font-sans">Parentheses hold the information</span></span><span class="text-green-400 group relative cursor-help border-b border-dashed border-green-400">"Hello, Grade 10!"<span class="absolute hidden group-hover:block bg-green-100 text-green-900 text-xs p-2 rounded -top-8 -left-8 shadow w-40 font-sans">Quotes surround Strings (text)</span></span><span class="text-yellow-400">)</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="border p-4 rounded bg-gray-50">
+                <h3 class="font-bold mb-2"><i class="fa-solid fa-triangle-exclamation text-yellow-500"></i> Common Traps!</h3>
+                <ul class="list-disc pl-5 text-sm text-gray-700 space-y-1">
+                    <li>Using a capital <strong>P</strong> (<code>Print()</code>). Python is case-sensitive!</li>
+                    <li>Forgetting to close the quotation marks.</li>
+                    <li>Forgetting to close the parentheses.</li>
+                </ul>
+            </div>
+            <div class="border p-4 rounded bg-gray-50 flex flex-col justify-center">
+                <p class="text-sm font-semibold mb-2">Think about it:</p>
+                <p class="text-sm italic">"Why do we need quotes around words but not around numbers in math?"</p>
+                <textarea class="w-full mt-2 p-2 border rounded text-sm" rows="2" placeholder="Your thoughts..."></textarea>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 5: We Do (Guided Practice) -->
+    <section class="section-card bg-white rounded-xl shadow-md p-6 mb-8" data-section="wedo">
+        <div class="flex justify-between items-center mb-4 border-b pb-2">
+            <h2 class="text-xl font-bold text-orange-600"><i class="fa-solid fa-handshake-angle mr-2"></i> We Do: Guided Fix</h2>
+            <div class="flex items-center gap-4">
+                <span class="text-sm font-bold text-green-600 bg-green-100 px-2 py-1 rounded no-print">10 XP</span>
+                <span class="text-sm bg-gray-200 text-gray-700 px-2 py-1 rounded timer-badge" id="badge-wedo">⏱ 0m 0s</span>
+            </div>
+        </div>
+        <p class="mb-4">Let's print our school name together. Oh no! There's a deliberate error below. Fix it to make it run.</p>
+        
+        <div class="flex flex-col md:flex-row gap-4">
+            <div class="flex-1 bg-gray-900 rounded-lg p-4">
+                <div class="text-gray-400 text-xs mb-2 uppercase tracking-wide border-b border-gray-700 pb-1">Code Editor (Fix the bug)</div>
+                <input type="text" id="wedo-code" class="w-full bg-transparent text-green-400 code-font outline-none border-b border-gray-600 focus:border-green-400 transition" value='print("DMES)'>
+            </div>
+            <div class="flex-1 bg-black rounded-lg p-4 flex flex-col">
+                <div class="text-gray-400 text-xs mb-2 uppercase tracking-wide border-b border-gray-700 pb-1 flex justify-between">
+                    <span>Console</span>
+                    <button onclick="runWeDo()" class="text-green-400 hover:text-green-300 no-print"><i class="fa-solid fa-play"></i> Run</button>
+                </div>
+                <div id="wedo-console" class="text-red-500 code-font text-sm flex-1">SyntaxError: unterminated string literal</div>
+            </div>
+        </div>
+        <div class="mt-4 no-print">
+            <button onclick="toggleHint('wedo-hint')" class="text-sm text-gray-500 hover:text-orange-600 underline"><i class="fa-regular fa-lightbulb"></i> Need a Hint?</button>
+            <div id="wedo-hint" class="hidden mt-2 p-3 bg-orange-50 border border-orange-200 rounded text-sm text-orange-800">
+                Look closely at the word DMES. A string needs to be <em>sandwiched</em> between two quotes!
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 6: You Do (Independent Mission) -->
+    <section class="section-card bg-white rounded-xl shadow-md p-6 mb-8 border-t-8 border-red-500" data-section="youdo">
+        <div class="flex justify-between items-center mb-4 border-b pb-2">
+            <h2 class="text-xl font-bold text-red-600"><i class="fa-solid fa-laptop-code mr-2"></i> You Do: Digital Name Tag</h2>
+            <div class="flex items-center gap-4">
+                <span class="text-sm font-bold text-green-600 bg-green-100 px-2 py-1 rounded no-print">20 XP</span>
+                <span class="text-sm bg-gray-200 text-gray-700 px-2 py-1 rounded timer-badge" id="badge-youdo">⏱ 0m 0s</span>
+            </div>
+        </div>
+        <p class="mb-4"><strong>Mission:</strong> Write Python code to create your digital identity.</p>
+        <ul class="list-disc pl-5 mb-4 text-sm space-y-1">
+            <li>Line 1: Print your Name.</li>
+            <li>Line 2: Print your favorite hobby.</li>
+            <li>Lines 3-5: Print a 3-line ASCII art shape (e.g., a smiley face or a star).</li>
+        </ul>
+
+        <div class="flex flex-col md:flex-row gap-4 h-64">
+            <!-- Sandbox Editor -->
+            <div class="flex-1 bg-gray-900 rounded-lg p-0 flex flex-col h-full border border-gray-700">
+                <div class="bg-gray-800 text-gray-300 text-xs px-4 py-2 uppercase tracking-wide rounded-t-lg flex justify-between items-center">
+                    <span>main.py</span>
+                    <button onclick="runSandbox()" class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-500 transition no-print"><i class="fa-solid fa-play"></i> Run Code</button>
+                </div>
+                <textarea id="sandbox-code" class="flex-1 w-full bg-gray-900 text-gray-100 code-font p-4 outline-none resize-none" spellcheck="false" placeholder="# Type your Python code here...&#10;"></textarea>
+                <div class="print-textarea-content print-only p-4" id="print-sandbox-code"></div>
+            </div>
+            
+            <!-- Sandbox Console -->
+            <div class="flex-1 bg-black rounded-lg p-0 flex flex-col h-full border border-gray-700">
+                <div class="bg-gray-800 text-gray-300 text-xs px-4 py-2 uppercase tracking-wide rounded-t-lg">
+                    Terminal Output
+                </div>
+                <div id="sandbox-console" class="flex-1 w-full text-gray-300 code-font p-4 overflow-y-auto whitespace-pre-wrap"></div>
+            </div>
+        </div>
+
+        <div class="mt-4 flex gap-4 no-print">
+            <button onclick="toggleHint('support-hint')" class="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200"><i class="fa-solid fa-life-ring"></i> Support Hint</button>
+            <button onclick="toggleHint('challenge-hint')" class="text-sm bg-purple-100 text-purple-700 px-3 py-1 rounded hover:bg-purple-200"><i class="fa-solid fa-star"></i> Challenge Extension</button>
+        </div>
+        <div id="support-hint" class="hidden mt-2 p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
+            <strong>Structure:</strong><br>
+            <code>print("My Name")</code><br>
+            <code>print("My Hobby")</code><br>
+            <code>print("  *  ")</code><br>
+            <code>print(" *** ")</code><br>
+            <code>print("*****")</code>
+        </div>
+        <div id="challenge-hint" class="hidden mt-2 p-3 bg-purple-50 border border-purple-200 rounded text-sm text-purple-800">
+            <strong>Fast Finishers!</strong> Did you know you can print multiple lines using triple quotes? Try <code>print(''' line1<br>line2<br>line3 ''')</code> instead of using print() three times!
+        </div>
+    </section>
+
+    <!-- SECTION 7: Progress Check -->
+    <section class="section-card bg-white rounded-xl shadow-md p-6 mb-8" data-section="check">
+        <div class="flex justify-between items-center mb-4 border-b pb-2">
+            <h2 class="text-xl font-bold text-teal-600"><i class="fa-solid fa-magnifying-glass-chart mr-2"></i> Bug Hunter (Progress Check)</h2>
+            <div class="flex items-center gap-4">
+                <span class="text-sm font-bold text-green-600 bg-green-100 px-2 py-1 rounded no-print">10 XP</span>
+                <span class="text-sm bg-gray-200 text-gray-700 px-2 py-1 rounded timer-badge" id="badge-check">⏱ 0m 0s</span>
+            </div>
+        </div>
+        <p class="mb-4 text-sm text-gray-600">Analyze the code snippets and identify the bugs.</p>
+
+        <div class="space-y-6">
+            <!-- Q1 -->
+            <div class="bg-gray-50 p-4 rounded border">
+                <p class="font-semibold mb-2">1. What is wrong with this code? <code class="bg-gray-200 px-1 rounded code-font text-red-600">print("Python)</code></p>
+                <div class="space-y-2">
+                    <label class="flex items-center gap-2"><input type="radio" name="q1" value="a" class="no-print"> <span class="print-textarea-content">A. Missing a closing quotation mark (")</span></label>
+                    <label class="flex items-center gap-2"><input type="radio" name="q1" value="b" class="no-print"> <span>B. Capital 'P' is missing</span></label>
+                    <label class="flex items-center gap-2"><input type="radio" name="q1" value="c" class="no-print"> <span>C. Missing parentheses</span></label>
+                </div>
+            </div>
+            <!-- Q2 -->
+            <div class="bg-gray-50 p-4 rounded border">
+                <p class="font-semibold mb-2">2. What is wrong with this code? <code class="bg-gray-200 px-1 rounded code-font text-red-600">Print("Hello")</code></p>
+                <div class="space-y-2">
+                    <label class="flex items-center gap-2"><input type="radio" name="q2" value="a" class="no-print"> <span>A. The quotes are in the wrong place</span></label>
+                    <label class="flex items-center gap-2"><input type="radio" name="q2" value="b" class="no-print"> <span class="print-textarea-content">B. 'print' must be all lowercase</span></label>
+                    <label class="flex items-center gap-2"><input type="radio" name="q2" value="c" class="no-print"> <span>C. Python doesn't understand "Hello"</span></label>
+                </div>
+            </div>
+        </div>
+        <button onclick="checkQuiz()" class="mt-4 bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700 no-print transition">Check Answers</button>
+        <div id="quiz-feedback" class="mt-3 text-sm font-semibold hidden"></div>
+    </section>
+
+    <!-- SECTION 8: Closure & Submission -->
+    <section class="section-card bg-white rounded-xl shadow-md p-6 mb-8" data-section="closure">
+        <div class="flex justify-between items-center mb-4 border-b pb-2">
+            <h2 class="text-xl font-bold text-gray-800"><i class="fa-solid fa-clipboard-check mr-2"></i> Mission Complete & Reflection</h2>
+            <span class="text-sm bg-gray-200 text-gray-700 px-2 py-1 rounded timer-badge" id="badge-closure">⏱ 0m 0s</span>
+        </div>
+
+        <div class="mb-6">
+            <label class="block font-semibold mb-2">How confident do you feel about writing <code>print()</code> statements?</label>
+            <div class="flex gap-4 text-3xl justify-center bg-gray-50 p-4 rounded no-print">
+                <button class="hover:scale-125 transition grayscale hover:grayscale-0" onclick="setConfidence(1)">😢</button>
+                <button class="hover:scale-125 transition grayscale hover:grayscale-0" onclick="setConfidence(2)">😕</button>
+                <button class="hover:scale-125 transition grayscale hover:grayscale-0" onclick="setConfidence(3)">😐</button>
+                <button class="hover:scale-125 transition grayscale hover:grayscale-0" onclick="setConfidence(4)">🙂</button>
+                <button class="hover:scale-125 transition grayscale hover:grayscale-0" onclick="setConfidence(5)">🤩</button>
+            </div>
+            <div id="print-confidence" class="print-only font-bold">Confidence Rating: [Selected]</div>
+        </div>
+
+        <div class="mb-6">
+            <label class="block font-semibold mb-2">Exit Ticket Reflection:</label>
+            <p class="text-sm text-gray-600 mb-2">"Today I learned how to make the computer output text. One consequence of missing a quote is a syntax error. Next lesson..."</p>
+            <textarea id="exit-ticket" rows="2" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500" placeholder="Finish the reflection..."></textarea>
+            <div class="print-textarea-content print-only" id="print-exit-ticket"></div>
+        </div>
+
+        <!-- Dynamic Final Dashboard -->
+        <div id="dashboard" class="bg-blue-50 border-2 border-blue-200 rounded-xl p-6 mt-8">
+            <h3 class="text-2xl font-bold text-center text-blue-800 mb-4 uppercase tracking-wider">Mission Debrief</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <p class="mb-1"><span class="font-bold text-gray-700">Student:</span> <span id="dash-name" class="text-blue-900 border-b border-blue-300 pb-1 inline-block min-w-[150px]"></span></p>
+                    <p class="mb-1"><span class="font-bold text-gray-700">Class:</span> <span id="dash-class" class="text-blue-900 border-b border-blue-300 pb-1 inline-block min-w-[150px]"></span></p>
+                    <p class="mb-1"><span class="font-bold text-gray-700">Date:</span> <span id="dash-date" class="text-blue-900 border-b border-blue-300 pb-1 inline-block min-w-[150px]"></span></p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-inner text-center border border-gray-200">
+                    <p class="text-sm font-bold text-gray-500 uppercase">Total Score</p>
+                    <p class="text-4xl font-black text-green-600"><span id="dash-score">0</span><span class="text-xl text-gray-400">/50</span></p>
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <p class="font-bold text-gray-700 mb-2">Time Logs:</p>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm" id="dash-times">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <div class="mt-8 text-center no-print">
+                <p class="text-sm text-gray-500 mb-4">Click below to generate a PDF for Google Classroom submission.</p>
+                <button onclick="prepareAndPrint()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition transform hover:scale-105"><i class="fa-solid fa-file-pdf mr-2"></i> Save as PDF / Print</button>
+            </div>
+        </div>
+    </section>
 
     <script>
-        // --- GLOBALS & SCORING ---
-        let totalScore = 0;
-        let maxScore = 75; // 5 Hook + 5 TSW + 15 Vocab + 10 DoNow + 10 WeDo + 10 YouDo + 20 Quiz
-        let pointsAwarded = {};
+        // State Variables
+        let currentScore = 0;
+        const maxScore = 50;
+        let timers = { entry: 0, briefing: 0, donow: 0, teach: 0, wedo: 0, youdo: 0, check: 0, closure: 0 };
+        let activeSection = null;
+        let intervalId = null;
+        let awarded = { donow: false, wedo: false, youdo: false, quiz: false };
 
-        function awardPoints(taskId, points) {
-            if (!pointsAwarded[taskId]) {
-                pointsAwarded[taskId] = true;
-                totalScore += points;
-                document.getElementById('current-score').innerText = totalScore;
-                
-                // Pop animation
-                let scoreUi = document.getElementById('floating-score');
-                scoreUi.style.transform = 'scale(1.2)';
-                setTimeout(() => { scoreUi.style.transform = 'scale(1)'; }, 200);
-            }
-        }
+        // Real-time Dashboard Updates
+        const inputs = ['student-name', 'student-class', 'student-date'];
+        inputs.forEach(id => {
+            document.getElementById(id).addEventListener('input', (e) => {
+                document.getElementById('dash-' + id.split('-')[1]).innerText = e.target.value;
+            });
+        });
 
-        // --- TIMER LOGIC ---
-        let timers = {
-            'sec-hook': { max: 120, spent: 0, active: false, interval: null },
-            'sec-tsw': { max: 120, spent: 0, active: false, interval: null },
-            'sec-vocab': { max: 120, spent: 0, active: false, interval: null },
-            'sec-donow': { max: 240, spent: 0, active: false, interval: null },
-            'sec-ido': { max: 600, spent: 0, active: false, interval: null },
-            'sec-wedo': { max: 420, spent: 0, active: false, interval: null },
-            'sec-youdo': { max: 600, spent: 0, active: false, interval: null },
-            'sec-quiz': { max: 300, spent: 0, active: false, interval: null },
-            'sec-exit': { max: 120, spent: 0, active: false, interval: null }
-        };
-        let currentActiveSectionId = null;
-
+        // Timer Logic
         function formatTime(seconds) {
-            let m = Math.floor(seconds / 60).toString().padStart(2, '0');
-            let s = (seconds % 60).toString().padStart(2, '0');
-            return `${m}:${s}`;
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return `${m}m ${s}s`;
         }
 
-        function activateSection(secId) {
-            if (!timers[secId] || currentActiveSectionId === secId) return;
-            
-            // Deactivate old
-            if (currentActiveSectionId && timers[currentActiveSectionId]) {
-                clearInterval(timers[currentActiveSectionId].interval);
-                timers[currentActiveSectionId].active = false;
-                document.getElementById(currentActiveSectionId).classList.remove('active-section');
-            }
+        function updateGlobalTimer() {
+            let total = Object.values(timers).reduce((a, b) => a + b, 0);
+            document.getElementById('global-timer').innerText = formatTime(total);
+        }
 
-            // Activate new
-            currentActiveSectionId = secId;
-            timers[secId].active = true;
-            document.getElementById(secId).classList.add('active-section');
-            
-            timers[secId].interval = setInterval(() => {
-                timers[secId].spent++;
-                let remaining = timers[secId].max - timers[secId].spent;
-                let displayStr = remaining >= 0 ? formatTime(remaining) : "+" + formatTime(Math.abs(remaining));
-                
-                let badge = document.getElementById('timer-' + secId);
-                if (badge) {
-                    badge.innerText = `⏱️ ${displayStr}`;
-                    if (remaining < 60 && remaining > 15) {
-                        badge.classList.add('warning');
-                    } else if (remaining <= 15 && remaining > 0) {
-                        badge.classList.remove('warning');
-                        badge.classList.add('danger');
-                    } else if (remaining <= 0) {
-                        badge.classList.remove('danger');
-                        badge.style.color = '#ef4444'; // Solid red if over time
-                    }
-                }
+        function activateTimer(sectionId) {
+            if (activeSection === sectionId) return; // Already active
+
+            // Visual Card Highlighting
+            document.querySelectorAll('.section-card').forEach(card => card.classList.remove('active-section'));
+            document.querySelector(`[data-section="${sectionId}"]`).classList.add('active-section');
+
+            if (intervalId) clearInterval(intervalId);
+            activeSection = sectionId;
+
+            intervalId = setInterval(() => {
+                timers[sectionId]++;
+                document.getElementById(`badge-${sectionId}`).innerText = '⏱ ' + formatTime(timers[sectionId]);
+                updateGlobalTimer();
             }, 1000);
         }
 
-        // --- VOCABULARY MATCHING LOGIC ---
-        const vocabData = [
-            { id: 't1', type: 'term', text: 'Occur', match: 'd1' },
-            { id: 't2', type: 'term', text: 'Cause', match: 'd2' },
-            { id: 't3', type: 'term', text: 'Consequence', match: 'd3' },
-            { id: 'd2', type: 'def', text: 'The reason why something happened.', match: 't2' },
-            { id: 'd3', type: 'def', text: 'The result or effect of an action.', match: 't3' },
-            { id: 'd1', type: 'def', text: 'To happen or take place.', match: 't1' }
-        ];
-        
-        let selectedVocab = null;
-        let vocabMatches = 0;
-
-        function initVocab() {
-            const container = document.getElementById('vocab-container');
-            vocabData.forEach(item => {
-                let btn = document.createElement('button');
-                btn.className = `vocab-btn no-print border-2 border-slate-600 rounded-lg p-3 font-semibold transition ${item.type === 'term' ? 'text-blue-300' : 'text-emerald-300'}`;
-                btn.innerText = item.text;
-                btn.id = item.id;
-                btn.onclick = () => handleVocabClick(item, btn);
-                container.appendChild(btn);
-                
-                // Add hidden print versions
-                let pText = document.createElement('div');
-                pText.className = 'print-only border-b border-gray-300 py-1';
-                if(item.type==='term') {
-                   let def = vocabData.find(d => d.id === item.match).text;
-                   pText.innerHTML = `<strong>${item.text}</strong>: ${def}`;
-                   container.appendChild(pText);
-                }
+        // Attach click listeners to sections
+        document.querySelectorAll('.section-card').forEach(card => {
+            card.addEventListener('click', () => activateTimer(card.getAttribute('data-section')));
+            // Also trigger on interacting with inputs inside
+            card.querySelectorAll('input, textarea, select, button').forEach(el => {
+                el.addEventListener('focus', () => activateTimer(card.getAttribute('data-section')));
             });
-        }
-
-        function handleVocabClick(item, btnEl) {
-            if (btnEl.classList.contains('matched')) return;
-
-            if (!selectedVocab) {
-                // First selection
-                selectedVocab = { item, el: btnEl };
-                btnEl.classList.add('selected');
-            } else {
-                // Second selection
-                if (selectedVocab.item.id === item.id) {
-                    // Deselect
-                    btnEl.classList.remove('selected');
-                    selectedVocab = null;
-                } else if (selectedVocab.item.match === item.id) {
-                    // Match found
-                    btnEl.classList.add('matched');
-                    selectedVocab.el.classList.remove('selected');
-                    selectedVocab.el.classList.add('matched');
-                    selectedVocab = null;
-                    vocabMatches++;
-                    if (vocabMatches === 3) {
-                        document.getElementById('vocab-feedback').innerText = "Access Granted! Vocabulary fully mapped.";
-                        awardPoints('vocab', 15);
-                    }
-                } else {
-                    // Incorrect match
-                    btnEl.classList.add('error');
-                    selectedVocab.el.classList.add('error');
-                    setTimeout(() => {
-                        btnEl.classList.remove('error');
-                        if(selectedVocab) selectedVocab.el.classList.remove('selected', 'error');
-                        selectedVocab = null;
-                    }, 800);
-                }
-            }
-        }
-        initVocab();
-
-        // --- DO NOW LOGIC ---
-        function checkDoNow() {
-            let inputs = document.querySelectorAll('.donow-input');
-            let filled = Array.from(inputs).every(i => i.value.trim().length > 3);
-            if (filled) {
-                document.getElementById('donow-feedback').classList.remove('hidden');
-                awardPoints('donow', 10);
-            }
-        }
-
-        // --- PYTHON PARSER (MOCK) ---
-        function mockPythonEval(code) {
-            let lines = code.split('\n');
-            let output = [];
-            let lineNum = 1;
-            for(let line of lines) {
-                let tLine = line.trim();
-                if(!tLine) { lineNum++; continue; }
-                
-                // Common mistakes checks
-                if(tLine.startsWith("Print(")) {
-                    return { success: false, msg: `Traceback (most recent call last):\n  File "main.py", line ${lineNum}\nNameError: name 'Print' is not defined. Did you mean: 'print'?` };
-                }
-                if(!tLine.startsWith("print(")) {
-                    return { success: false, msg: `  File "main.py", line ${lineNum}\n    ${tLine}\nSyntaxError: invalid syntax` };
-                }
-                if(!tLine.endsWith(")")) {
-                    return { success: false, msg: `  File "main.py", line ${lineNum}\n    ${tLine}\nSyntaxError: unexpected EOF while parsing` };
-                }
-                
-                // Extract content
-                let inside = tLine.substring(6, tLine.length - 1).trim();
-                
-                // Check quotes
-                if((inside.startsWith('"') && inside.endsWith('"')) || (inside.startsWith("'") && inside.endsWith("'"))) {
-                    output.push(inside.substring(1, inside.length - 1));
-                } else if (inside.startsWith('"') || inside.startsWith("'")) {
-                     return { success: false, msg: `  File "main.py", line ${lineNum}\n    ${tLine}\nSyntaxError: unterminated string literal` };
-                } else {
-                     return { success: false, msg: `Traceback (most recent call last):\n  File "main.py", line ${lineNum}\nNameError: name '${inside}' is not defined` };
-                }
-                lineNum++;
-            }
-            return { success: true, msg: output.join('\n') };
-        }
-
-        // --- I DO LOGIC ---
-        function runTeacherDemo() {
-            const out = document.getElementById('demo-console');
-            out.innerHTML = `<span class="text-gray-500">Executing...</span>`;
-            setTimeout(() => {
-                out.innerHTML = `Hello, Grade 10!`;
-            }, 500);
-        }
-
-        // --- WE DO LOGIC ---
-        function runWeDo() {
-            let code = document.getElementById('wedo-code').value;
-            let result = mockPythonEval(code);
-            let consoleEl = document.getElementById('wedo-console');
-            let statusEl = document.getElementById('wedo-status');
-            
-            if(result.success) {
-                consoleEl.innerHTML = result.msg;
-                consoleEl.className = "console-output text-emerald-400";
-                statusEl.innerText = "✓ Bug Fixed!";
-                statusEl.className = "text-sm font-bold text-emerald-400";
-                awardPoints('wedo', 10);
-            } else {
-                consoleEl.innerHTML = `<span class="text-red-500">${result.msg}</span>`;
-                consoleEl.className = "console-output text-red-500 bg-red-950/20";
-                statusEl.innerText = "✖ Syntax Error";
-                statusEl.className = "text-sm font-bold text-red-500";
-            }
-        }
-
-        // --- YOU DO LOGIC ---
-        function runYouDo() {
-            let code = document.getElementById('youdo-code').value;
-            let result = mockPythonEval(code);
-            let consoleEl = document.getElementById('youdo-console');
-            
-            if(result.success) {
-                consoleEl.innerHTML = result.msg || "<span class='text-gray-500'>[No Output]</span>";
-                consoleEl.className = "console-output text-emerald-400";
-                
-                // Check if they did at least 3 lines
-                let lines = result.msg.split('\n').filter(l => l.trim() !== "");
-                if(lines.length >= 3) {
-                    awardPoints('youdo', 10);
-                    consoleEl.innerHTML += "\n\n<span class='text-blue-400 font-bold'>[SYSTEM: Requirements met! +10 XP]</span>";
-                } else {
-                    consoleEl.innerHTML += "\n\n<span class='text-yellow-400 font-bold'>[SYSTEM: Almost! Remember to include Name, Hobby, and 3-line ASCII art.]</span>";
-                }
-            } else {
-                consoleEl.innerHTML = `<span class="text-red-500">${result.msg}</span>`;
-                consoleEl.className = "console-output text-red-500 bg-red-950/20";
-            }
-        }
-
-        // --- QUIZ LOGIC ---
-        function checkQuiz() {
-            let q1 = document.querySelector('input[name="q1"]:checked');
-            let q2 = document.querySelector('input[name="q2"]:checked');
-            let feedback = "";
-            let qScore = 0;
-
-            if (q1) {
-                if (q1.value === 'correct') { feedback += "Q1: Correct! Lowercase print with quotes.\n"; qScore += 10; }
-                else { feedback += "Q1: Incorrect. Remember 'print' is strictly lowercase and strings need quotes.\n"; }
-            } else { feedback += "Q1: Missing answer.\n"; }
-
-            if (q2) {
-                if (q2.value === 'correct') { feedback += "Q2: Correct! The string literal is unterminated (missing end quote).\n"; qScore += 10; }
-                else { feedback += "Q2: Incorrect. Look closely at the end of the word 'Hello'.\n"; }
-            } else { feedback += "Q2: Missing answer.\n"; }
-
-            document.getElementById('quiz-feedback').innerText = feedback;
-            if(q1 && q1.value === 'correct' && !pointsAwarded['q1']) { awardPoints('q1', 10); }
-            if(q2 && q2.value === 'correct' && !pointsAwarded['q2']) { awardPoints('q2', 10); }
-        }
-
-        // --- EXIT TICKET LOGIC ---
-        function setConfidence(level) {
-            let btns = document.querySelectorAll('.conf-btn');
-            btns.forEach((b, index) => {
-                b.style.opacity = index < level ? '1' : '0.2';
-                b.style.transform = index + 1 === level ? 'scale(1.2)' : 'scale(1)';
-            });
-            let confText = document.getElementById('conf-text');
-            confText.innerText = `Confidence Level Recorded: ${level} / 5`;
-            confText.classList.remove('hidden');
-        }
-
-        // --- DASHBOARD & PRINT LOGIC ---
-        function generateDashboard() {
-            let name = document.getElementById('student-name').value || "Unknown Agent";
-            let squad = document.getElementById('student-class').value || "N/A";
-            
-            let timeReport = "";
-            for (const [sec, data] of Object.entries(timers)) {
-                timeReport += `<li class="flex justify-between border-b border-slate-700 py-1">
-                    <span class="text-gray-400">${document.getElementById(sec).querySelector('h2').innerText}</span>
-                    <span class="font-mono text-emerald-400">${formatTime(data.spent)}</span>
-                </li>`;
-            }
-
-            let html = `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <h3 class="text-xl font-bold mb-2">Agent Profile</h3>
-                        <p><strong>Name:</strong> ${name}</p>
-                        <p><strong>Squad:</strong> ${squad}</p>
-                        <div class="mt-4 p-4 bg-slate-800 rounded text-center border ${totalScore >= (maxScore * 0.8) ? 'border-emerald-500' : 'border-yellow-500'}">
-                            <p class="text-sm text-gray-400">Total XP Gathered</p>
-                            <p class="text-4xl font-black ${totalScore >= (maxScore * 0.8) ? 'text-emerald-400' : 'text-yellow-400'}">${totalScore} / ${maxScore}</p>
-                        </div>
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-bold mb-2">Time Telemetry</h3>
-                        <ul class="text-sm space-y-1">
-                            ${timeReport}
-                        </ul>
-                    </div>
-                </div>
-            `;
-            
-            document.getElementById('dashboard-summary').innerHTML = html;
-            
-            let btnPrint = document.getElementById('btn-print');
-            btnPrint.disabled = false;
-            btnPrint.style.opacity = "1";
-        }
-
-        // Before printing, ensure textareas and inputs map to print-visible elements or their attributes
-        window.addEventListener('beforeprint', () => {
-            document.querySelectorAll('input[type="text"]').forEach(input => {
-                input.setAttribute('value', input.value);
-            });
-            document.querySelectorAll('textarea').forEach(ta => {
-                ta.innerHTML = ta.value;
-            });
-            
-            // Auto-generate dashboard if they forgot
-            if(document.getElementById('btn-print').disabled) {
-                generateDashboard();
-            }
         });
 
-        function prepareAndPrint() {
-            let btn = document.getElementById('btn-print');
-            let originalText = btn.innerText;
-            btn.innerText = "Generating PDF... Please wait.";
-            
-            // 1. Prepare inputs/textareas to show up in the captured HTML
-            document.querySelectorAll('input[type="text"]').forEach(input => {
-                input.setAttribute('value', input.value);
-            });
-            document.querySelectorAll('textarea').forEach(ta => {
-                ta.innerHTML = ta.value; // lock in the typed text
-            });
-
-            // 2. Add class to temporarily flip colors to light mode for the PDF
-            document.body.classList.add('pdf-export-mode');
-
-            // 3. Generate filename dynamically
-            let studentName = document.getElementById('student-name').value || "Student";
-            let fileName = `Mission1_${studentName.replace(/[^a-z0-9]/gi, '_')}.pdf`;
-
-            // 4. Configure PDF generator
-            const element = document.body;
-            const opt = {
-              margin:       [0.5, 0.5, 0.5, 0.5],
-              filename:     fileName,
-              image:        { type: 'jpeg', quality: 0.98 },
-              html2canvas:  { scale: 2, windowWidth: 1024 }, // forces desktop layout style
-              jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-            };
-
-            // 5. Build and save the PDF
-            html2pdf().set(opt).from(element).save().then(() => {
-                // Restore original dark mode state
-                document.body.classList.remove('pdf-export-mode');
-                btn.innerText = originalText;
-            }).catch(err => {
-                console.error("PDF generation failed or blocked by iframe:", err);
-                document.body.classList.remove('pdf-export-mode');
-                btn.innerText = originalText;
+        // Scoring Logic
+        function addScore(points, source) {
+            if (!awarded[source]) {
+                currentScore += points;
+                awarded[source] = true;
+                document.getElementById('score-display').innerText = currentScore;
+                document.getElementById('dash-score').innerText = currentScore;
                 
-                // Show the custom warning modal instead of failing silently
-                document.getElementById('iframe-warning').classList.remove('hidden');
-            });
-
-            // Fallback timeout in case html2pdf silently hangs due to strict iframe rules
-            setTimeout(() => {
-                if (btn.innerText === "Generating PDF... Please wait.") {
-                    document.body.classList.remove('pdf-export-mode');
-                    btn.innerText = originalText;
-                    document.getElementById('iframe-warning').classList.remove('hidden');
-                }
-            }, 4000);
+                // Visual pop effect
+                const scoreEl = document.getElementById('score-display').parentElement;
+                scoreEl.classList.add('scale-110', 'bg-green-500');
+                setTimeout(() => scoreEl.classList.remove('scale-110', 'bg-green-500'), 300);
+            }
         }
 
+        function toggleHint(id) {
+            const el = document.getElementById(id);
+            el.classList.toggle('hidden');
+        }
+
+        // Do Now Checking
+        function checkDoNow() {
+            const occur = document.getElementById('donow-occur').value;
+            const feedback = document.getElementById('donow-feedback');
+            feedback.classList.remove('hidden', 'text-red-600', 'text-green-600');
+            
+            if (occur === 'error') {
+                feedback.classList.add('text-green-600');
+                feedback.innerHTML = '<i class="fa-solid fa-check-circle"></i> Correct! An error occurs. +10 XP';
+                addScore(10, 'donow');
+            } else {
+                feedback.classList.add('text-red-600');
+                feedback.innerHTML = '<i class="fa-solid fa-xmark-circle"></i> Not quite. Capital P and missing quotes cause an Error.';
+            }
+        }
+
+        // We Do Logic
+        function runWeDo() {
+            const code = document.getElementById('wedo-code').value.trim();
+            const consoleEl = document.getElementById('wedo-console');
+            
+            if (code === 'print("DMES")' || code === "print('DMES')") {
+                consoleEl.className = 'text-gray-300 code-font text-sm flex-1';
+                consoleEl.innerText = "DMES\n\n> Program finished successfully.";
+                addScore(10, 'wedo');
+            } else if (code.includes('print("DMES)')) {
+                consoleEl.className = 'text-red-500 code-font text-sm flex-1';
+                consoleEl.innerText = 'SyntaxError: unterminated string literal (missing a quote!)';
+            } else {
+                consoleEl.className = 'text-yellow-500 code-font text-sm flex-1';
+                consoleEl.innerText = 'NameError or SyntaxError. Check your spelling and quotes.';
+            }
+        }
+
+        // --- PSEUDO-PYTHON INTERPRETER FOR SANDBOX ---
+        function runSandbox() {
+            const code = document.getElementById('sandbox-code').value;
+            const consoleEl = document.getElementById('sandbox-console');
+            consoleEl.innerHTML = ''; 
+            
+            if(code.trim() === '') {
+                consoleEl.innerHTML = '<span class="text-gray-500">Waiting for code...</span>';
+                return;
+            }
+
+            const lines = code.split('\n');
+            let output = '';
+            let hasError = false;
+            let commandsRun = 0;
+
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i].trim();
+                if (line === '' || line.startsWith('#')) continue;
+
+                // Simple regex parser for print statements
+                // Matches print("..."), print('...'), print('''...''')
+                const printRegex = /^print\s*\(\s*(['"]{1,3})(.*?)\1\s*\)$/s; 
+                
+                // Check for common errors first
+                if (line.startsWith('Print')) {
+                    output += `<span class="text-red-500">Traceback (most recent call last):\n  File "main.py", line ${i+1}\nNameError: name 'Print' is not defined. Did you mean: 'print'?</span>\n`;
+                    hasError = true;
+                    break;
+                }
+                
+                if (line.startsWith('print') && !line.includes('(')) {
+                     output += `<span class="text-red-500">SyntaxError: Missing parentheses in call to 'print'. Did you mean print(...)? (Line ${i+1})</span>\n`;
+                     hasError = true;
+                     break;
+                }
+
+                // If it looks somewhat like a print statement
+                if (line.startsWith('print(')) {
+                    // Manual extraction to handle internal quotes better for a simple simulation
+                    let contentRaw = line.substring(line.indexOf('(') + 1, line.lastIndexOf(')'));
+                    contentRaw = contentRaw.trim();
+                    
+                    if (contentRaw === "") {
+                         output += '\n'; // empty print
+                         commandsRun++;
+                         continue;
+                    }
+
+                    // Check if enclosed in quotes
+                    if ((contentRaw.startsWith('"') && contentRaw.endsWith('"')) || 
+                        (contentRaw.startsWith("'") && contentRaw.endsWith("'"))) {
+                        // valid
+                        let innerText = contentRaw.substring(1, contentRaw.length - 1);
+                        output += innerText + '\n';
+                        commandsRun++;
+                    } else if (contentRaw.startsWith('"""') && contentRaw.endsWith('"""')) {
+                        let innerText = contentRaw.substring(3, contentRaw.length - 3);
+                        output += innerText + '\n';
+                        commandsRun++;
+                    } else {
+                        output += `<span class="text-red-500">SyntaxError: unterminated string literal or invalid syntax. Check your quotes on line ${i+1}.</span>\n`;
+                        hasError = true;
+                        break;
+                    }
+                } else {
+                     output += `<span class="text-red-500">SyntaxError: invalid syntax (Line ${i+1})</span>\n`;
+                     hasError = true;
+                     break;
+                }
+            }
+
+            if (!hasError && commandsRun > 0) {
+                 output += `\n<span class="text-green-500">> Process finished with exit code 0</span>`;
+                 if(commandsRun >= 3) {
+                     addScore(20, 'youdo'); // Award points if they wrote at least 3 valid print lines (Name, Hobby, Art)
+                 }
+            }
+
+            consoleEl.innerHTML = output;
+        }
+
+        // Quiz Logic
+        function checkQuiz() {
+            const q1 = document.querySelector('input[name="q1"]:checked');
+            const q2 = document.querySelector('input[name="q2"]:checked');
+            const feedback = document.getElementById('quiz-feedback');
+            
+            feedback.classList.remove('hidden', 'text-red-600', 'text-green-600');
+            
+            if (q1 && q2) {
+                if (q1.value === 'a' && q2.value === 'b') {
+                    feedback.classList.add('text-green-600');
+                    feedback.innerHTML = '<i class="fa-solid fa-check-double"></i> Perfect debugging! +10 XP';
+                    addScore(10, 'quiz');
+                } else {
+                    feedback.classList.add('text-red-600');
+                    feedback.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Check again. Q1 is missing a quote, Q2 uses a capital P.';
+                }
+            } else {
+                feedback.classList.add('text-yellow-600');
+                feedback.innerText = 'Please answer both questions.';
+            }
+        }
+
+        function setConfidence(level) {
+            document.getElementById('print-confidence').innerText = `Confidence Rating: ${level} / 5`;
+            const buttons = document.querySelectorAll('button[onclick^="setConfidence"]');
+            buttons.forEach(b => b.classList.add('grayscale'));
+            buttons[level-1].classList.remove('grayscale');
+        }
+
+        // Pre-print formatting
+        function prepareAndPrint() {
+            // Stop timers
+            if (intervalId) clearInterval(intervalId);
+
+            // Copy textareas to divs for printing
+            const textareas = ['entry-response', 'donow-cause', 'donow-consequence', 'sandbox-code', 'exit-ticket'];
+            textareas.forEach(id => {
+                const val = document.getElementById(id).value;
+                document.getElementById('print-' + id).innerText = val ? val : '[No response provided]';
+            });
+            
+            // Handle select box
+            const selectVal = document.getElementById('donow-occur').options[document.getElementById('donow-occur').selectedIndex].text;
+            document.getElementById('print-donow-occur').innerText = document.getElementById('donow-occur').value ? selectVal : '[Not selected]';
+
+            // Populate dashboard times
+            const timesDiv = document.getElementById('dash-times');
+            timesDiv.innerHTML = '';
+            const labels = { entry: 'Entry', briefing: 'Objectives', donow: 'Do Now', teach: 'Learn', wedo: 'Guided', youdo: 'Independent', check: 'Quiz', closure: 'Reflection' };
+            for (const [key, val] of Object.entries(timers)) {
+                timesDiv.innerHTML += `<div class="bg-white p-2 rounded border border-blue-100"><span class="block text-gray-500 text-xs uppercase">${labels[key]}</span><span class="font-bold">${formatTime(val)}</span></div>`;
+            }
+
+            window.print();
+        }
+
+        // Also listen for browser native print (Ctrl+P)
+        window.addEventListener('beforeprint', prepareAndPrint);
+        
     </script>
 </body>
 </html>
