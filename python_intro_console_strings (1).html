@@ -6,6 +6,10 @@
     <title>Python Lesson 1: Introduction to Console Output & Strings</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- ADDED: html2pdf library to bypass Google Sites iframe print blocks -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code:wght@400;600&display=swap');
         
@@ -619,11 +623,59 @@
                 timesDiv.innerHTML += `<div class="bg-white p-2 rounded border border-blue-100"><span class="block text-gray-500 text-xs uppercase">${labels[key]}</span><span class="font-bold">${formatTime(val)}</span></div>`;
             }
 
-            window.print();
+            // --- NEW: HTML2PDF LOGIC TO BYPASS IFRAME BLOCKS ---
+            
+            // 1. Inject temporary print styles dynamically
+            const printStyles = document.createElement('style');
+            printStyles.id = 'pdf-print-styles';
+            printStyles.innerHTML = `
+                body { background-color: white !important; color: black !important; }
+                .no-print { display: none !important; }
+                .print-only { display: block !important; }
+                .section-card { border: 1px solid #ccc !important; margin-bottom: 20px !important; box-shadow: none !important; page-break-inside: avoid !important; }
+                textarea { display: none !important; }
+                .print-textarea-content { display: block !important; white-space: pre-wrap !important; font-family: inherit !important; border-bottom: 1px dashed #ccc !important; padding-bottom: 5px !important; }
+                .bg-gray-900 { background-color: #f3f4f6 !important; color: #000 !important; }
+                .text-white { color: #000 !important; }
+                .text-green-400 { color: #166534 !important; }
+                .text-red-400 { color: #991b1b !important; }
+                .text-blue-400 { color: #1e3a8a !important; }
+                .text-yellow-400 { color: #854d0e !important; }
+                #dashboard { page-break-before: always !important; }
+            `;
+            document.head.appendChild(printStyles);
+
+            // 2. Update button UI to show it is loading
+            const printBtn = document.querySelector('button[onclick="prepareAndPrint()"]');
+            const originalBtnText = printBtn.innerHTML;
+            printBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Generating File...';
+            printBtn.disabled = true;
+
+            // 3. Configure html2pdf settings
+            const studentName = document.getElementById('student-name').value.trim() || 'Student';
+            const opt = {
+                margin:       0.3,
+                filename:     `${studentName}_Python_Lesson_1.pdf`, // Auto-names the file with the student's name!
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
+                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+
+            // 4. Generate the PDF and clean up
+            html2pdf().set(opt).from(document.body).save().then(() => {
+                // Restore the original UI and styles after download
+                document.head.removeChild(printStyles);
+                printBtn.innerHTML = originalBtnText;
+                printBtn.disabled = false;
+            }).catch(err => {
+                console.error("PDF Generation Error:", err);
+                document.head.removeChild(printStyles);
+                printBtn.innerHTML = originalBtnText;
+                printBtn.disabled = false;
+            });
         }
 
-        // Also listen for browser native print (Ctrl+P)
-        window.addEventListener('beforeprint', prepareAndPrint);
+        // REMOVED: window.addEventListener('beforeprint', prepareAndPrint);
         
     </script>
 </body>
