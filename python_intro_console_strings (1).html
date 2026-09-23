@@ -70,7 +70,7 @@
                 <p class="text-gray-600 text-lg">Introduction to Console Output & Strings</p>
             </div>
             <div class="mt-4 md:mt-0 text-right">
-                <span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm font-semibold">Grade 10 Programming</span>
+                <span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm font-semibold">Grade 10 Computer Science</span>
             </div>
         </div>
         
@@ -237,17 +237,17 @@
     <!-- SECTION 6: You Do (Independent Mission) -->
     <section class="section-card bg-white rounded-xl shadow-md p-6 mb-8 border-t-8 border-red-500" data-section="youdo">
         <div class="flex justify-between items-center mb-4 border-b pb-2">
-            <h2 class="text-xl font-bold text-red-600"><i class="fa-solid fa-laptop-code mr-2"></i> You Do: Digital Name Tag</h2>
+            <h2 class="text-xl font-bold text-red-600"><i class="fa-solid fa-laptop-code mr-2"></i> You Do: Digital Identity & Triangle</h2>
             <div class="flex items-center gap-4">
                 <span class="text-sm font-bold text-green-600 bg-green-100 px-2 py-1 rounded no-print">20 XP</span>
                 <span class="text-sm bg-gray-200 text-gray-700 px-2 py-1 rounded timer-badge" id="badge-youdo">⏱ 0m 0s</span>
             </div>
         </div>
-        <p class="mb-4"><strong>Mission:</strong> Write Python code to create your digital identity.</p>
+        <p class="mb-4"><strong>Mission:</strong> Write Python code to introduce yourself and draw a shape!</p>
         <ul class="list-disc pl-5 mb-4 text-sm space-y-1">
             <li>Line 1: Print your Name.</li>
             <li>Line 2: Print your favorite hobby.</li>
-            <li>Lines 3-5: Print a 3-line ASCII art shape (e.g., a smiley face or a star).</li>
+            <li>Lines 3-6: Print a 4-line right-angled triangle pattern using the <code>*</code> symbol.</li>
         </ul>
 
         <div class="flex flex-col md:flex-row gap-4 h-64">
@@ -278,12 +278,13 @@
             <strong>Structure:</strong><br>
             <code>print("My Name")</code><br>
             <code>print("My Hobby")</code><br>
-            <code>print("  *  ")</code><br>
-            <code>print(" *** ")</code><br>
-            <code>print("*****")</code>
+            <code>print("*")</code><br>
+            <code>print("**")</code><br>
+            <code>print("***")</code><br>
+            <code>print("****")</code>
         </div>
         <div id="challenge-hint" class="hidden mt-2 p-3 bg-purple-50 border border-purple-200 rounded text-sm text-purple-800">
-            <strong>Fast Finishers!</strong> Did you know you can print multiple lines using triple quotes? Try <code>print(''' line1<br>line2<br>line3 ''')</code> instead of using print() three times!
+            <strong>Fast Finishers!</strong> Did you know you can print multiple lines using triple quotes? Try <code>print(''' line1<br>line2<br>line3 ''')</code> instead of using print() many times!
         </div>
     </section>
 
@@ -661,8 +662,35 @@
                 jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
             };
 
-            // 4. Generate the PDF and clean up
-            html2pdf().set(opt).from(document.body).save().then(() => {
+            // Cross-browser fix 1: Scroll to top before capturing to prevent blank pages on Safari/Mobile
+            window.scrollTo({ top: 0, behavior: 'instant' });
+
+            // 4. Generate the PDF with cross-browser explicit Blob handling
+            html2pdf().set(opt).from(document.body).toPdf().get('pdf').then(function(pdf) {
+                const blob = pdf.output('blob');
+                
+                // Cross-browser fix 2: Fallback for older Edge/IE
+                if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+                    window.navigator.msSaveOrOpenBlob(blob, opt.filename);
+                } else {
+                    // Robust approach for Chrome, Firefox, Safari, iOS
+                    const blobUrl = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.style.display = 'none';
+                    link.href = blobUrl;
+                    link.download = opt.filename;
+                    
+                    // Cross-browser fix 3: Firefox requires the link to be attached to the body
+                    document.body.appendChild(link);
+                    link.click();
+                    
+                    // Cleanup memory
+                    setTimeout(() => {
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(blobUrl);
+                    }, 250);
+                }
+            }).then(() => {
                 // Restore the original UI and styles after download
                 document.head.removeChild(printStyles);
                 printBtn.innerHTML = originalBtnText;
@@ -672,6 +700,7 @@
                 document.head.removeChild(printStyles);
                 printBtn.innerHTML = originalBtnText;
                 printBtn.disabled = false;
+                alert("There was an issue generating the PDF. Try using Chrome or Safari if the problem persists.");
             });
         }
 
