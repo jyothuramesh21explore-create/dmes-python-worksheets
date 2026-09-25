@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DMES Python Worksheet: User Input</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; color: #1f2937; }
+        .code-font { font-family: 'Fira Code', monospace; }
+        
+        .stage-card { 
+            background: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+            margin-bottom: 24px; padding: 24px; border-left: 6px solid #d1d5db; transition: all 0.3s;
+            position: relative; overflow: hidden;
+        }
+        .stage-card.active { border-left-color: #3b82f6; box-shadow: 0 8px 15px rgba(59,130,246,0.15); }
+        .stage-card.completed { border-left-color: #10b981; }
+        
+        .stage-badge { 
+            background: #f3f4f6; color: #4b5563; font-size: 0.75rem; font-weight: 700; 
+            padding: 4px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.05em;
+            display: inline-block; margin-bottom: 12px;
+        }
+
+        .timer-badge {
+            position: absolute; top: 24px; right: 24px; background: #e5e7eb; color: #374151;
+            font-family: 'Fira Code', monospace; padding: 4px 12px; border-radius: 6px; font-weight: 600;
+            transition: background 0.3s, color 0.3s;
+        }
+        .timer-warning { background: #fee2e2; color: #b91c1c; animation: pulse 1.5s infinite; }
+
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        /* Custom inputs */
+        .tech-input { border: 2px solid #e5e7eb; border-radius: 6px; padding: 8px 12px; width: 100%; transition: border-color 0.2s; }
+        .tech-input:focus { border-color: #3b82f6; outline: none; }
+        
+        .code-area { background: #1e1e1e; color: #d4d4d4; border-radius: 6px; padding: 16px; width: 100%; resize: vertical; }
+        .code-area:focus { outline: 2px solid #3b82f6; }
+        
+        .terminal { background: #000; color: #4ade80; padding: 16px; border-radius: 6px; font-family: 'Fira Code', monospace; min-height: 100px;}
+        
+        /* Modal for Custom Prompts */
+        #custom-prompt-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        #custom-prompt-box { background: white; padding: 24px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+
+        @media print {
+            body { background: white; color: black; }
+            .sticky { position: static !important; }
+            .stage-card { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; margin-bottom: 20px; }
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            textarea { height: auto !important; overflow: visible !important; border: 1px solid #ccc; }
+            .code-area { background: #f8f9fa; color: #000; border: 1px solid #000; }
+            .terminal { background: #f8f9fa; color: #000; border: 1px solid #000; }
+            .timer-badge { display: none; }
+        }
+        .print-only { display: none; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <!-- Sticky Scoreboard -->
+    <div class="sticky top-0 z-50 bg-white/90 backdrop-blur-md shadow-md rounded-b-xl p-4 mb-8 flex justify-between items-center no-print border-t-4 border-blue-500">
+        <div>
+            <h1 class="text-xl font-bold text-gray-800"><i class="fas fa-terminal text-blue-500 mr-2"></i> Python: User Input</h1>
+            <p class="text-xs text-gray-500">Grade 10 | Computer Science</p>
+        </div>
+        <div class="flex items-center gap-6">
+            <div class="text-center">
+                <p class="text-xs text-gray-500 uppercase font-bold">Total Score</p>
+                <p class="text-2xl font-black text-blue-600 code-font"><span id="total-score">0</span><span class="text-sm text-gray-400">/50</span></p>
+            </div>
+            <button onclick="prepareAndPrint()" class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-700 transition">
+                <i class="fas fa-print mr-2"></i> Export PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- Custom Prompt Modal -->
+    <div id="custom-prompt-overlay" class="no-print flex">
+        <div id="custom-prompt-box">
+            <h3 class="text-lg font-bold mb-2" id="prompt-message">Input required:</h3>
+            <input type="text" id="prompt-input" class="tech-input mb-4 code-font" autocomplete="off" autofocus>
+            <div class="flex justify-end">
+                <button id="prompt-submit" class="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="stage-card bg-blue-50 border-blue-200">
+        <h2 class="text-lg font-bold mb-4 text-blue-800"><i class="fas fa-user-astronaut mr-2"></i> Operator Credentials</h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-xs font-bold text-gray-600 mb-1">Student Name</label>
+                <input type="text" id="student-name" class="tech-input" placeholder="Type your name...">
+                <span class="print-only print-val font-bold border-b border-black inline-block min-w-[200px]"></span>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-600 mb-1">Grade</label>
+                <select id="student-grade" class="tech-input">
+                    <option value="" disabled selected>Select Grade...</option>
+                    <option value="9">Grade 9</option>
+                    <option value="10">Grade 10</option>
+                    <option value="11">Grade 11</option>
+                    <option value="12">Grade 12</option>
+                </select>
+                <span class="print-only print-val font-bold border-b border-black inline-block min-w-[100px]"></span>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-600 mb-1">Section</label>
+                <select id="student-section" class="tech-input">
+                    <option value="" disabled selected>Select Section...</option>
+                    <option value="A">A</option><option value="B">B</option><option value="C">C</option>
+                    <option value="F">F</option><option value="G">G</option><option value="H">H</option>
+                </select>
+                <span class="print-only print-val font-bold border-b border-black inline-block min-w-[100px]"></span>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-600 mb-1">Date</label>
+                <input type="date" id="student-date" class="tech-input">
+                <span class="print-only print-val font-bold border-b border-black inline-block min-w-[150px]"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="stage-card" id="stage-1" onclick="startTimer('stage-1', 2)">
+        <div class="stage-badge">Stage 1: Entry</div>
+        <div class="timer-badge" id="timer-stage-1">⏱ 2:00</div>
+        
+        <h2 class="text-xl font-bold mb-4"><i class="fas fa-rocket text-purple-500 mr-2"></i> Mission Launch: Static vs. Dynamic</h2>
+        <p class="mb-4 text-gray-700">Look at the two descriptions below. Which application is more useful in the real world and why?</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div class="border-2 border-gray-200 rounded-lg p-4 text-center cursor-pointer hover:border-purple-400 transition" onclick="document.getElementById('opt1').click()">
+                <i class="fas fa-newspaper text-4xl text-gray-400 mb-2"></i>
+                <h3 class="font-bold">App A: Static Article</h3>
+                <p class="text-sm text-gray-500">Displays the exact same text every time you open it.</p>
+                <input type="radio" name="entry-choice" id="opt1" value="static" class="mt-4">
+            </div>
+            <div class="border-2 border-gray-200 rounded-lg p-4 text-center cursor-pointer hover:border-purple-400 transition" onclick="document.getElementById('opt2').click()">
+                <i class="fas fa-search text-4xl text-blue-500 mb-2"></i>
+                <h3 class="font-bold">App B: Search Engine</h3>
+                <p class="text-sm text-gray-500">Asks you what you want to find, and provides unique results.</p>
+                <input type="radio" name="entry-choice" id="opt2" value="dynamic" class="mt-4">
+            </div>
+        </div>
+        
+        <label class="block text-sm font-bold text-gray-700 mb-2">Why did you choose that application? (5 Marks)</label>
+        <textarea id="entry-reason" class="tech-input mb-4" rows="2" placeholder="Explain your thinking..."></textarea>
+        
+        <button onclick="checkStage1()" class="bg-purple-600 text-white px-4 py-2 rounded font-bold hover:bg-purple-700 no-print transition">Submit Analysis</button>
+        <p id="feedback-stage-1" class="mt-2 text-sm font-bold hidden"></p>
+    </div>
+
+    <div class="stage-card bg-gray-50">
+        <div class="stage-badge">Stage 2: Learning Objective</div>
+        <h2 class="text-xl font-bold mb-2"><i class="fas fa-bullseye text-red-500 mr-2"></i> Today's Target</h2>
+        <p class="text-lg font-medium text-gray-800 border-l-4 border-red-500 pl-4 py-2 bg-white rounded-r">
+            I can develop a Python program that utilizes the <code class="code-font text-blue-600 bg-blue-50 px-1 rounded">input()</code> function to produce customized console output based on user responses.
+        </p>
+        
+        <h3 class="font-bold text-gray-700 mt-6 mb-2">Success Criteria (Tick as you achieve them):</h3>
+        <div class="space-y-2">
+            <label class="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" class="w-5 h-5 text-blue-600 rounded">
+                <span class="text-gray-700">I know what data type <code class="code-font text-sm">input()</code> always returns.</span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" class="w-5 h-5 text-blue-600 rounded">
+                <span class="text-gray-700">I can convert a string input into a number using <code class="code-font text-sm">int()</code>.</span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" class="w-5 h-5 text-blue-600 rounded">
+                <span class="text-gray-700">I can build a working program that asks the user questions.</span>
+            </label>
+        </div>
+    </div>
+
+    <div class="stage-card" id="stage-3" onclick="startTimer('stage-3', 4)">
+        <div class="stage-badge">Stage 3: Do Now!</div>
+        <div class="timer-badge" id="timer-stage-3">⏱ 4:00</div>
+        
+        <h2 class="text-xl font-bold mb-4"><i class="fas fa-bolt text-yellow-500 mr-2"></i> Concept Sort (5 Marks)</h2>
+        <p class="mb-4 text-gray-700">To build reliable programs, we must know what type of data we are receiving from the user. Match the input examples to their expected Data Types.</p>
+        
+        <div class="bg-gray-100 p-4 rounded-lg grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="flex items-center justify-between bg-white p-3 rounded shadow-sm">
+                <span class="code-font text-blue-700">"Ahmed"</span>
+                <select id="dt-ahmed" class="tech-input w-40 text-sm">
+                    <option value="">Select Type...</option>
+                    <option value="string">String (Text)</option>
+                    <option value="int">Integer (Whole Number)</option>
+                    <option value="boolean">Boolean (True/False)</option>
+                </select>
+                <span class="print-only print-val font-bold text-blue-600 ml-2"></span>
+            </div>
+            
+            <div class="flex items-center justify-between bg-white p-3 rounded shadow-sm">
+                <span class="code-font text-blue-700">15</span>
+                <select id="dt-15" class="tech-input w-40 text-sm">
+                    <option value="">Select Type...</option>
+                    <option value="string">String (Text)</option>
+                    <option value="int">Integer (Whole Number)</option>
+                    <option value="boolean">Boolean (True/False)</option>
+                </select>
+                <span class="print-only print-val font-bold text-blue-600 ml-2"></span>
+            </div>
+
+            <div class="flex items-center justify-between bg-white p-3 rounded shadow-sm">
+                <span class="code-font text-blue-700">-99</span>
+                <select id="dt-99" class="tech-input w-40 text-sm">
+                    <option value="">Select Type...</option>
+                    <option value="string">String (Text)</option>
+                    <option value="int">Integer (Whole Number)</option>
+                    <option value="boolean">Boolean (True/False)</option>
+                </select>
+                <span class="print-only print-val font-bold text-blue-600 ml-2"></span>
+            </div>
+
+            <div class="flex items-center justify-between bg-white p-3 rounded shadow-sm">
+                <span class="code-font text-blue-700">True</span>
+                <select id="dt-true" class="tech-input w-40 text-sm">
+                    <option value="">Select Type...</option>
+                    <option value="string">String (Text)</option>
+                    <option value="int">Integer (Whole Number)</option>
+                    <option value="boolean">Boolean (True/False)</option>
+                </select>
+                <span class="print-only print-val font-bold text-blue-600 ml-2"></span>
+            </div>
+        </div>
+
+        <h3 class="font-bold text-gray-700 mt-6 mb-2">Vocabulary Check</h3>
+        <p class="text-sm text-gray-600 mb-2">Select the correct term for: <em>"Ensuring the data entered is accurate and expected (e.g., entering numbers for age, not letters)."</em></p>
+        <select id="vocab-check" class="tech-input mb-4 max-w-xs">
+            <option value="">Select word...</option>
+            <option value="reliability">Reliability</option>
+            <option value="consistency">Consistency</option>
+            <option value="validity">Validity</option>
+        </select>
+        <span class="print-only print-val font-bold text-blue-600 ml-2 block mb-4"></span>
+
+        <button onclick="checkStage3()" class="bg-yellow-500 text-white px-4 py-2 rounded font-bold hover:bg-yellow-600 no-print transition">Check Data Types</button>
+        <p id="feedback-stage-3" class="mt-2 text-sm font-bold hidden"></p>
+    </div>
+
+    <div class="stage-card bg-white" id="stage-4" onclick="startTimer('stage-4', 10)">
+        <div class="stage-badge">Stage 4: Explicit Instruction</div>
+        <div class="timer-badge" id="timer-stage-4">⏱ 10:00</div>
+        
+        <h2 class="text-xl font-bold mb-4"><i class="fas fa-chalkboard-teacher text-blue-600 mr-2"></i> Teach Time: The input() Function</h2>
+        
+        <p class="mb-4">To make programs dynamic (interactive), we must capture user input. In Python, we use the <code class="code-font bg-gray-100 px-1 rounded">input()</code> function.</p>
+        
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded-r">
+            <h3 class="font-bold text-blue-800 mb-2">Syntax Breakdown</h3>
+            <div class="code-font text-sm bg-gray-900 text-white p-3 rounded mb-2">
+                <span class="text-yellow-300">user_name</span> = <span class="text-blue-300">input</span>(<span class="text-green-300">"What is your name? "</span>)
+            </div>
+            <ul class="list-disc pl-5 text-sm text-gray-700 space-y-1">
+                <li><strong class="text-yellow-600">user_name</strong>: The variable where we save the answer.</li>
+                <li><strong class="text-blue-600">input()</strong>: The built-in Python command to pause and wait for the keyboard.</li>
+                <li><strong class="text-green-600">"What is your name? "</strong>: The prompt displayed on the screen so the user knows what to type.</li>
+            </ul>
+        </div>
+
+        <div class="bg-red-50 border-2 border-red-200 rounded-lg p-4 text-center shadow-sm">
+            <i class="fas fa-exclamation-triangle text-3xl text-red-500 mb-2"></i>
+            <h3 class="font-black text-red-700 uppercase tracking-widest">The Golden Rule</h3>
+            <p class="text-red-900 font-bold mt-2">The <code class="code-font bg-white px-2 py-1 rounded shadow-sm">input()</code> function ALWAYS returns a STRING.</p>
+            <p class="text-sm mt-1">Even if the user types <strong>15</strong>, Python sees it as <strong>"15"</strong> (text, not math).</p>
+        </div>
+    </div>
+
+    <div class="stage-card" id="stage-5" onclick="startTimer('stage-5', 5)">
+        <div class="stage-badge">Stage 5: Teacher Model (I Do)</div>
+        <div class="timer-badge" id="timer-stage-5">⏱ 5:00</div>
+        
+        <h2 class="text-xl font-bold mb-4"><i class="fas fa-eye text-green-500 mr-2"></i> The Digital Bouncer</h2>
+        <p class="mb-4 text-gray-700">Watch as the teacher builds a program that asks for an age and tries to do math on it.</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <h3 class="font-bold text-gray-700 mb-2">1. The Broken Code</h3>
+                <div class="code-area mb-2">
+<span class="text-blue-400">print</span>(<span class="text-green-400">"Welcome to the club."</span>)
+age = <span class="text-blue-400">input</span>(<span class="text-green-400">"Age: "</span>)
+<span class="text-gray-500"># Attempting to add 5 years to the age</span>
+future_age = age + <span class="text-yellow-400">5</span>
+<span class="text-blue-400">print</span>(<span class="text-green-400">"In 5 years you will be: "</span> + future_age)
+                </div>
+                <button onclick="showBouncerError()" class="bg-red-100 text-red-700 px-3 py-1 rounded text-sm font-bold border border-red-300 no-print hover:bg-red-200"><i class="fas fa-play mr-1"></i> Simulate Error</button>
+            </div>
+            
+            <div>
+                <h3 class="font-bold text-gray-700 mb-2">2. The Fix (Type Casting)</h3>
+                <div class="code-area mb-2">
+<span class="text-blue-400">print</span>(<span class="text-green-400">"Welcome to the club."</span>)
+<span class="text-gray-500"># Wrap input() inside int() to convert to Number</span>
+age = <span class="text-purple-400">int</span>(<span class="text-blue-400">input</span>(<span class="text-green-400">"Age: "</span>))
+future_age = age + <span class="text-yellow-400">5</span>
+<span class="text-gray-500"># Convert back to str() to print with text</span>
+<span class="text-blue-400">print</span>(<span class="text-green-400">"In 5 years you will be: "</span> + <span class="text-purple-400">str</span>(future_age))
+                </div>
+                <button onclick="showBouncerFix()" class="bg-green-100 text-green-700 px-3 py-1 rounded text-sm font-bold border border-green-300 no-print hover:bg-green-200"><i class="fas fa-play mr-1"></i> Simulate Fix</button>
+            </div>
+        </div>
+
+        <div id="bouncer-console" class="terminal mt-4 hidden"></div>
+    </div>
+
+    <div class="stage-card" id="stage-6" onclick="startTimer('stage-6', 10)">
+        <div class="stage-badge">Stage 6: Guided Practice (We Do)</div>
+        <div class="timer-badge" id="timer-stage-6">⏱ 10:00</div>
+        
+        <h2 class="text-xl font-bold mb-4"><i class="fas fa-users text-teal-500 mr-2"></i> Build a Calculator (10 Marks)</h2>
+        <p class="mb-4 text-gray-700">Let's build a program together that asks for two numbers, adds them, and prints the result. Fill in the missing syntax.</p>
+        
+        <div class="bg-gray-900 p-6 rounded-lg font-mono text-sm leading-8">
+            <div class="text-gray-400 mb-2"># 1. Ask for the first number and convert it immediately</div>
+            <span class="text-white">num1 = </span>
+            <select id="wd-1" class="bg-gray-700 text-white border border-gray-500 rounded px-1"><option value=""></option><option value="str">str</option><option value="int">int</option><option value="input">input</option></select>
+            <span class="text-white">(</span>
+            <select id="wd-2" class="bg-gray-700 text-white border border-gray-500 rounded px-1"><option value=""></option><option value="print">print</option><option value="input">input</option></select>
+            <span class="text-green-400">("Enter first number: ")</span>
+            <span class="text-white">)</span>
+            <span class="print-only print-val font-bold text-white ml-2"></span>
+            
+            <div class="text-gray-400 mt-4 mb-2"># 2. Ask for the second number</div>
+            <span class="text-white">num2 = int(input(</span>
+            <input type="text" id="wd-3" class="bg-gray-700 text-green-400 border border-gray-500 rounded px-2 w-48" placeholder='"Enter string here..."'>
+            <span class="text-white">))</span>
+            <span class="print-only print-val font-bold text-white ml-2"></span>
+
+            <div class="text-gray-400 mt-4 mb-2"># 3. Add them together</div>
+            <span class="text-white">total = num1 </span>
+            <select id="wd-4" class="bg-gray-700 text-white border border-gray-500 rounded px-1"><option value=""></option><option value="+">+</option><option value="=">=</option></select>
+            <span class="text-white"> num2</span>
+            <span class="print-only print-val font-bold text-white ml-2"></span>
+
+            <div class="text-gray-400 mt-4 mb-2"># 4. Print the result</div>
+            <select id="wd-5" class="bg-gray-700 text-white border border-gray-500 rounded px-1"><option value=""></option><option value="print">print</option><option value="input">input</option></select>
+            <span class="text-white">(</span><span class="text-green-400">"The answer is: "</span><span class="text-white">, total)</span>
+            <span class="print-only print-val font-bold text-white ml-2"></span>
+        </div>
+
+        <div class="mt-4 flex gap-4 no-print">
+            <button onclick="checkStage6()" class="bg-teal-600 text-white px-4 py-2 rounded font-bold hover:bg-teal-700 transition">Check Code</button>
+            <button onclick="toggleHint('hint-6')" class="bg-gray-200 text-gray-700 px-4 py-2 rounded font-bold hover:bg-gray-300 transition"><i class="fas fa-lightbulb"></i> Need a Hint?</button>
+        </div>
+        <div id="hint-6" class="hidden mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-sm text-yellow-800">
+            <strong>Hint:</strong> If we are doing math (adding), we must use <code>int()</code> to convert the text to numbers. To output to the screen, we use <code>print()</code>.
+        </div>
+        <p id="feedback-stage-6" class="mt-2 text-sm font-bold hidden"></p>
+    </div>
+
+    <div class="stage-card border-l-4 border-indigo-500 shadow-lg" id="stage-7" onclick="startTimer('stage-7', 20)">
+        <div class="stage-badge bg-indigo-100 text-indigo-800">Stage 7: Independent Application (You Do)</div>
+        <div class="timer-badge" id="timer-stage-7">⏱ 20:00</div>
+        
+        <h2 class="text-xl font-bold mb-2"><i class="fas fa-laptop-code text-indigo-600 mr-2"></i> Final Mission: Mad Libs Generator (15 Marks)</h2>
+        <p class="mb-4 text-gray-700">Write a Python script that asks the user for <strong>4 inputs</strong> and then prints a funny story using their words.</p>
+        
+        <div class="bg-indigo-50 p-4 rounded mb-4 text-sm text-indigo-900">
+            <strong>Checklist:</strong>
+            <ul class="list-disc pl-5 mt-1">
+                <li>Ask for a <code>noun</code> (e.g., dog, pizza)</li>
+                <li>Ask for an <code>adjective</code> (e.g., slimy, fast)</li>
+                <li>Ask for a <code>place</code> (e.g., Dubai, Mars)</li>
+                <li>Ask for a <code>number</code> (Remember to cast it if you want to do math, but for a story, string is fine!)</li>
+                <li>Use <code>print()</code> to combine them into one paragraph.</li>
+            </ul>
+        </div>
+
+        <h3 class="font-bold text-gray-700 mb-2">Write your Python Code below:</h3>
+        <textarea id="student-code" class="code-area h-48 mb-2" spellcheck="false" placeholder="# Type your Python code here...&#10;noun = input('Enter a noun: ')&#10;# keep going..."></textarea>
+        
+        <div class="flex gap-4 no-print mb-4">
+            <button onclick="runPythonSandbox()" class="bg-indigo-600 text-white px-6 py-2 rounded font-bold hover:bg-indigo-700 transition shadow"><i class="fas fa-play mr-2"></i> Run My Code</button>
+        </div>
+
+        <h3 class="font-bold text-gray-700 mb-2">Console Output:</h3>
+        <div id="sandbox-console" class="terminal min-h-[120px]">
+            <span class="text-gray-600">Waiting for program execution...</span>
+        </div>
+        <p id="feedback-stage-7" class="mt-2 text-sm font-bold hidden"></p>
+    </div>
+
+    <div class="stage-card" id="stage-8" onclick="startTimer('stage-8', 5)">
+        <div class="stage-badge">Stage 8: High-Impact Progress Check</div>
+        <div class="timer-badge" id="timer-stage-8">⏱ 5:00</div>
+        
+        <h2 class="text-xl font-bold mb-4"><i class="fas fa-clipboard-check text-orange-500 mr-2"></i> Show What You Know (15 Marks)</h2>
+        
+        <div class="space-y-6">
+            <!-- Q1 -->
+            <div>
+                <p class="font-bold text-gray-800 mb-2">1. If you write <code>x = input("Enter quantity: ")</code> and the user types <code>50</code>, what data type is stored in <code>x</code>?</p>
+                <div class="flex gap-4">
+                    <label class="flex items-center gap-2 cursor-pointer p-2 border rounded hover:bg-gray-50"><input type="radio" name="pc-q1" value="int"> Integer</label>
+                    <label class="flex items-center gap-2 cursor-pointer p-2 border rounded hover:bg-gray-50"><input type="radio" name="pc-q1" value="str"> String</label>
+                    <label class="flex items-center gap-2 cursor-pointer p-2 border rounded hover:bg-gray-50"><input type="radio" name="pc-q1" value="bool"> Boolean</label>
+                </div>
+                <span class="print-only print-val font-bold text-orange-600 mt-1 block"></span>
+            </div>
+
+            <!-- Q2 -->
+            <div>
+                <p class="font-bold text-gray-800 mb-2">2. How do you fix this broken code: <code>age = input("Age: ")</code> so that you can do math with it?</p>
+                <div class="flex flex-col gap-2">
+                    <label class="flex items-center gap-2 cursor-pointer p-2 border rounded hover:bg-gray-50"><input type="radio" name="pc-q2" value="wrong1"> <code>age = math.input("Age: ")</code></label>
+                    <label class="flex items-center gap-2 cursor-pointer p-2 border rounded hover:bg-gray-50"><input type="radio" name="pc-q2" value="correct"> <code>age = int(input("Age: "))</code></label>
+                    <label class="flex items-center gap-2 cursor-pointer p-2 border rounded hover:bg-gray-50"><input type="radio" name="pc-q2" value="wrong2"> <code>int(age) = input("Age: ")</code></label>
+                </div>
+                <span class="print-only print-val font-bold text-orange-600 mt-1 block"></span>
+            </div>
+
+            <!-- Q3 -->
+            <div>
+                <p class="font-bold text-gray-800 mb-2">3. Write a 2-line script that asks the user for their favorite color, and then prints: <em>"Wow, [color] is a great color!"</em></p>
+                <textarea id="pc-q3" class="code-area h-24" spellcheck="false" placeholder="Line 1...&#10;Line 2..."></textarea>
+            </div>
+        </div>
+
+        <button onclick="checkStage8()" class="mt-6 bg-orange-500 text-white px-4 py-2 rounded font-bold hover:bg-orange-600 no-print transition">Submit Progress Check</button>
+        <div id="feedback-stage-8" class="mt-4 text-sm font-bold p-4 rounded hidden"></div>
+    </div>
+
+    <div class="stage-card" id="stage-9" onclick="startTimer('stage-9', 2)">
+        <div class="stage-badge">Stage 9: Feedback & Adjustment</div>
+        <div class="timer-badge" id="timer-stage-9">⏱ 2:00</div>
+        
+        <h2 class="text-xl font-bold mb-4"><i class="fas fa-comment-dots text-pink-500 mr-2"></i> Reflection</h2>
+        
+        <div class="mb-6">
+            <p class="font-bold text-gray-700 mb-3">Self-Assessment: How confidently can you use the input() function?</p>
+            <div class="flex flex-wrap gap-4">
+                <label class="flex items-center gap-2 bg-green-50 text-green-800 px-4 py-2 rounded-full border border-green-200 cursor-pointer">
+                    <input type="radio" name="self-assess" value="Independently" class="w-4 h-4 text-green-600"> 🟢 Independently
+                </label>
+                <label class="flex items-center gap-2 bg-yellow-50 text-yellow-800 px-4 py-2 rounded-full border border-yellow-200 cursor-pointer">
+                    <input type="radio" name="self-assess" value="With Help" class="w-4 h-4 text-yellow-600"> 🟡 With Help
+                </label>
+                <label class="flex items-center gap-2 bg-red-50 text-red-800 px-4 py-2 rounded-full border border-red-200 cursor-pointer">
+                    <input type="radio" name="self-assess" value="Need Practice" class="w-4 h-4 text-red-600"> 🔴 Need Practice
+                </label>
+            </div>
+            <span class="print-only print-val font-bold text-pink-600 mt-2 block"></span>
+        </div>
+
+        <div class="mb-4">
+            <label class="block font-bold text-gray-700 mb-2">Closure: How does making sure user input is the correct data type drive the reliability of everyday apps? (Think about a banking app or login screen).</label>
+            <textarea id="reflection-text" class="tech-input h-24" placeholder="If apps don't check data types..."></textarea>
+        </div>
+
+        <div class="bg-gray-100 p-4 rounded border-dashed border-2 border-gray-300">
+            <h3 class="text-xs font-black uppercase text-gray-500 mb-2">Teacher Use Only (Instructional Adjustment)</h3>
+            <div class="flex gap-4 no-print">
+                <label><input type="checkbox"> Reteach</label>
+                <label><input type="checkbox"> Re-model</label>
+                <label><input type="checkbox"> Regroup</label>
+                <label><input type="checkbox"> Extend</label>
+            </div>
+            <div class="print-only text-sm text-gray-400">[ ] Reteach &nbsp;&nbsp; [ ] Re-model &nbsp;&nbsp; [ ] Regroup &nbsp;&nbsp; [ ] Extend</div>
+        </div>
+    </div>
+
+    <script>
+        // State Management
+        let totalScore = 0;
+        let maxScore = 50;
+        let timers = {};
+        let scoredSections = { stage1: false, stage3: false, stage6: false, stage7: false, stage8: false };
+        let stageTimes = {};
+
+        function updateScore(points) {
+            totalScore += points;
+            document.getElementById('total-score').innerText = totalScore;
+            
+            // Gamification feedback
+            const scoreElement = document.getElementById('total-score');
+            scoreElement.classList.add('text-green-500');
+            scoreElement.style.transform = 'scale(1.5)';
+            setTimeout(() => {
+                scoreElement.classList.remove('text-green-500');
+                scoreElement.style.transform = 'scale(1)';
+            }, 300);
+        }
+
+        function toggleHint(id) {
+            const el = document.getElementById(id);
+            el.classList.toggle('hidden');
+        }
+
+        // Timer Logic
+        function startTimer(stageId, minutes) {
+            if(timers[stageId]) return; // Already started
+            
+            document.getElementById(stageId).classList.add('active');
+            
+            let seconds = minutes * 60;
+            let timeSpent = 0;
+            const badge = document.getElementById(`timer-${stageId}`);
+            
+            timers[stageId] = setInterval(() => {
+                seconds--;
+                timeSpent++;
+                stageTimes[stageId] = timeSpent; // Log time spent
+                
+                if(seconds <= 0) {
+                    clearInterval(timers[stageId]);
+                    badge.innerText = "⏱ 0:00";
+                    badge.classList.add('timer-warning');
+                    return;
+                }
+                
+                if(seconds <= 60) badge.classList.add('timer-warning');
+                
+                let m = Math.floor(seconds / 60);
+                let s = seconds % 60;
+                badge.innerText = `⏱ ${m}:${s < 10 ? '0'+s : s}`;
+            }, 1000);
+        }
+
+        // Evaluation Functions
+        function checkStage1() {
+            if(scoredSections.stage1) return;
+            const val = document.querySelector('input[name="entry-choice"]:checked')?.value;
+            const text = document.getElementById('entry-reason').value.trim();
+            const fb = document.getElementById('feedback-stage-1');
+            
+            if(val && text.length > 5) {
+                scoredSections.stage1 = true;
+                updateScore(5);
+                fb.innerHTML = "✅ Excellent! Dynamic apps use input to provide personalized results.";
+                fb.classList.remove('hidden', 'text-red-600');
+                fb.classList.add('text-green-600');
+                document.getElementById('stage-1').classList.add('completed');
+            } else {
+                fb.innerHTML = "❌ Please select an option and write a reason.";
+                fb.classList.remove('hidden');
+                fb.classList.add('text-red-600');
+            }
+        }
+
+        function checkStage3() {
+            if(scoredSections.stage3) return;
+            let correct = 0;
+            if(document.getElementById('dt-ahmed').value === 'string') correct++;
+            if(document.getElementById('dt-15').value === 'int') correct++;
+            if(document.getElementById('dt-99').value === 'int') correct++;
+            if(document.getElementById('dt-true').value === 'boolean') correct++;
+            if(document.getElementById('vocab-check').value === 'validity') correct++;
+
+            const fb = document.getElementById('feedback-stage-3');
+            if(correct === 5) {
+                scoredSections.stage3 = true;
+                updateScore(5);
+                fb.innerHTML = "✅ Perfect! All data types matched.";
+                fb.classList.replace('text-red-600', 'text-green-600');
+                document.getElementById('stage-3').classList.add('completed');
+            } else {
+                fb.innerHTML = `⚠️ You got ${correct}/5 correct. Keep trying! (Hint: Text in quotes is a string).`;
+                fb.classList.add('text-red-600');
+            }
+            fb.classList.remove('hidden');
+        }
+
+        // Stage 5 Simulations
+        function showBouncerError() {
+            const cons = document.getElementById('bouncer-console');
+            cons.classList.remove('hidden');
+            cons.innerHTML = `
+                <div class="text-gray-400">> Welcome to the club.</div>
+                <div class="text-gray-400">> Age: <span class="text-white">15</span></div>
+                <div class="text-red-500 mt-2">TypeError: can only concatenate str (not "int") to str</div>
+                <div class="text-gray-500 text-xs mt-1"># Program Crashed! We tried to do math (age + 5) but 'age' was a String!</div>
+            `;
+        }
+
+        function showBouncerFix() {
+            const cons = document.getElementById('bouncer-console');
+            cons.classList.remove('hidden');
+            cons.innerHTML = `
+                <div class="text-gray-400">> Welcome to the club.</div>
+                <div class="text-gray-400">> Age: <span class="text-white">15</span></div>
+                <div class="text-green-400 mt-2">In 5 years you will be: 20</div>
+                <div class="text-gray-500 text-xs mt-1"># Success! We cast input() to int(), did math, then cast back to str() to print.</div>
+            `;
+        }
+
+        function checkStage6() {
+            if(scoredSections.stage6) return;
+            let correct = 0;
+            if(document.getElementById('wd-1').value === 'int') correct++;
+            if(document.getElementById('wd-2').value === 'input') correct++;
+            let wd3 = document.getElementById('wd-3').value;
+            if(wd3.includes("Enter") || wd3.length > 3) correct++; // Flexible check
+            if(document.getElementById('wd-4').value === '+') correct++;
+            if(document.getElementById('wd-5').value === 'print') correct++;
+
+            const fb = document.getElementById('feedback-stage-6');
+            if(correct === 5) {
+                scoredSections.stage6 = true;
+                updateScore(10);
+                fb.innerHTML = "✅ Outstanding code structure!";
+                fb.classList.replace('text-red-600', 'text-green-600');
+                document.getElementById('stage-6').classList.add('completed');
+            } else {
+                fb.innerHTML = `⚠️ Check your syntax. Make sure you cast to int, ask for input, add (+), and print!`;
+                fb.classList.add('text-red-600');
+            }
+            fb.classList.remove('hidden');
+        }
+
+        // --- Custom Python Simulator for Worksheet ---
+        
+        let pyVars = {};
+        let pyLines = [];
+        let pyCurrentLine = 0;
+        let pyConsole = null;
+
+        function showCustomPrompt(message, callback) {
+            const overlay = document.getElementById('custom-prompt-overlay');
+            const box = document.getElementById('prompt-box');
+            const msgEl = document.getElementById('prompt-message');
+            const inputEl = document.getElementById('prompt-input');
+            const submitBtn = document.getElementById('prompt-submit');
+            
+            msgEl.innerText = message;
+            inputEl.value = "";
+            overlay.style.display = "flex";
+            inputEl.focus();
+
+            // Remove old listeners to prevent multiple firings
+            const newBtn = submitBtn.cloneNode(true);
+            submitBtn.parentNode.replaceChild(newBtn, submitBtn);
+            
+            const handleSubmit = () => {
+                const val = inputEl.value;
+                overlay.style.display = "none";
+                callback(val);
+            };
+
+            newBtn.addEventListener('click', handleSubmit);
+            inputEl.addEventListener('keypress', (e) => {
+                if(e.key === 'Enter') handleSubmit();
+            });
+        }
+
+        async function runPythonSandbox() {
+            const code = document.getElementById('student-code').value;
+            pyConsole = document.getElementById('sandbox-console');
+            pyConsole.innerHTML = "";
+            pyVars = {};
+            
+            // Basic Syntax Validation for points
+            if(!scoredSections.stage7) {
+                if(code.includes('input(') && code.includes('print(') && code.split('\n').length >= 3) {
+                    scoredSections.stage7 = true;
+                    updateScore(15);
+                    document.getElementById('stage-7').classList.add('completed');
+                }
+            }
+
+            pyLines = code.split('\n').filter(line => line.trim() !== '' && !line.trim().startsWith('#'));
+            if(pyLines.length === 0) {
+                pyConsole.innerHTML = "<span class='text-red-500'>Error: No code to run.</span>";
+                return;
+            }
+            
+            pyCurrentLine = 0;
+            executeNextLine();
+        }
+
+        function executeNextLine() {
+            if (pyCurrentLine >= pyLines.length) {
+                pyConsole.innerHTML += `<div class='text-gray-500 text-xs mt-2'>=== Program Finished ===</div>`;
+                return;
+            }
+
+            let line = pyLines[pyCurrentLine].trim();
+            pyCurrentLine++;
+
+            // Check for input assignment: var = input("prompt") or var = int(input("prompt"))
+            let inputRegex = /([a-zA-Z_]\w*)\s*=\s*(?:int\()?input\(['"](.*?)['"]\)(?:\))?/;
+            let inputMatch = line.match(inputRegex);
+
+            if (inputMatch) {
+                let varName = inputMatch[1];
+                let promptMsg = inputMatch[2];
+                showCustomPrompt(promptMsg, (val) => {
+                    pyVars[varName] = val; // Store it
+                    pyConsole.innerHTML += `<div class='text-gray-400'>&gt; ${promptMsg} <span class='text-white'>${val}</span></div>`;
+                    executeNextLine(); // Proceed after user input
+                });
+                return; // halt execution until callback fires
+            }
+
+            // Check for print statement: print(...)
+            let printRegex = /^print\((.*)\)/;
+            let printMatch = line.match(printRegex);
+
+            if (printMatch) {
+                let content = printMatch[1];
+                let output = content;
+                
+                // Very basic simulation: replace variables if they are concatenated or comma separated
+                // Strip quotes and + symbols for a rough text display
+                output = output.replace(/['"]/g, '');
+                output = output.replace(/\+/g, ' ');
+                output = output.replace(/,/g, ' ');
+                
+                // Replace variable names with their values
+                for(let v in pyVars) {
+                    let regex = new RegExp("\\b" + v + "\\b", "g");
+                    output = output.replace(regex, pyVars[v]);
+                }
+                
+                // Handle f-strings roughly
+                output = output.replace(/^f\s*/, '').replace(/[{}]/g, '');
+
+                pyConsole.innerHTML += `<div class='text-green-400'>${output}</div>`;
+                executeNextLine();
+                return;
+            }
+
+            // Unrecognized line
+            pyConsole.innerHTML += `<div class='text-red-500'>SyntaxError on line: ${line}</div>`;
+            // Still continue to try best effort
+            executeNextLine();
+        }
+
+        // --- End Sandbox ---
+
+        function checkStage8() {
+            if(scoredSections.stage8) return;
+            let correct = 0;
+            let feedbackHtml = "";
+            
+            const q1 = document.querySelector('input[name="pc-q1"]:checked')?.value;
+            if(q1 === 'str') {
+                correct++;
+                feedbackHtml += "<p>Q1: ✅ Correct. input() always returns a String.</p>";
+            } else {
+                feedbackHtml += "<p>Q1: ❌ Incorrect. Remember the Golden Rule: input() returns a String.</p>";
+            }
+
+            const q2 = document.querySelector('input[name="pc-q2"]:checked')?.value;
+            if(q2 === 'correct') {
+                correct++;
+                feedbackHtml += "<p>Q2: ✅ Correct. We wrap input inside int().</p>";
+            } else {
+                feedbackHtml += "<p>Q2: ❌ Incorrect. Review Stage 5 (Casting).</p>";
+            }
+
+            const q3 = document.getElementById('pc-q3').value;
+            if(q3.includes('input(') && q3.includes('print(')) {
+                correct++;
+                feedbackHtml += "<p>Q3: ✅ Great job writing the script!</p>";
+            } else {
+                feedbackHtml += "<p>Q3: ❌ Script missing input() or print().</p>";
+            }
+
+            const fb = document.getElementById('feedback-stage-8');
+            fb.innerHTML = feedbackHtml;
+            fb.classList.remove('hidden');
+            
+            if(correct > 0) {
+                scoredSections.stage8 = true;
+                updateScore(correct * 5); // 5 points each
+                if(correct === 3) document.getElementById('stage-8').classList.add('completed');
+                fb.classList.add('bg-orange-50', 'text-orange-900', 'border', 'border-orange-200');
+            }
+        }
+
+        // Print preparation formatting
+        function prepareAndPrint() {
+            // Copy select values to spans
+            document.querySelectorAll('select').forEach(sel => {
+                let text = sel.options[sel.selectedIndex]?.text || "";
+                if(text.includes('Select')) text = ""; // Hide default
+                let span = sel.nextElementSibling;
+                if(span && span.classList.contains('print-val')) {
+                    span.innerText = text;
+                }
+            });
+
+            // Copy input values to spans (for student info)
+            document.querySelectorAll('input[type="text"], input[type="date"]').forEach(inp => {
+                let span = inp.nextElementSibling;
+                if(span && span.classList.contains('print-val')) {
+                    span.innerText = inp.value;
+                }
+            });
+
+            // Format Radio button selections for print
+            document.querySelectorAll('input[type="radio"]:checked').forEach(rad => {
+                let container = rad.closest('div').parentElement;
+                let span = container.querySelector('.print-val');
+                if(span) {
+                    // Extract label text
+                    let labelText = rad.parentElement.innerText;
+                    span.innerText = "Selected: " + labelText;
+                }
+            });
+
+            // Expand text areas
+            document.querySelectorAll('textarea').forEach(ta => {
+                ta.style.height = 'auto';
+                ta.style.height = (ta.scrollHeight) + 'px';
+            });
+
+            window.print();
+        }
+    </script>
+</body>
+</html>
