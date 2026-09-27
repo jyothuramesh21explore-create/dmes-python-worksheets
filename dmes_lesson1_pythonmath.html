@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DMES Interactive Lesson - Basic Python Math</title>
+    <style>
+        :root {
+            --primary: #1e3a8a; /* Deep Blue */
+            --secondary: #3b82f6; /* Blue */
+            --accent: #f59e0b; /* Amber */
+            --background: #f3f4f6;
+            --surface: #ffffff;
+            --text-main: #1f2937;
+            --text-light: #6b7280;
+            --success: #10b981;
+            --danger: #ef4444;
+            --border: #e5e7eb;
+        }
+
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        body { background-color: var(--background); color: var(--text-main); line-height: 1.6; padding: 20px; margin: 0; }
+        
+        .container { max-width: 900px; margin: 0 auto; }
+        
+        header { background-color: var(--primary); color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center; }
+        header h1 { margin: 0 0 10px 0; font-size: 1.8rem; }
+        
+        .student-info { background: var(--surface); padding: 15px; border-radius: 0 0 8px 8px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .input-group { display: flex; flex-direction: column; }
+        .input-group label { font-size: 0.85rem; font-weight: bold; color: var(--text-light); margin-bottom: 5px; }
+        .input-group input, .input-group select { padding: 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 1rem; }
+        
+        .score-tracker { position: sticky; top: 10px; background: var(--accent); color: white; padding: 10px 20px; border-radius: 20px; font-weight: bold; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 100; display: flex; justify-content: space-between; align-items: center;}
+        
+        .stage-card { background: var(--surface); border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: relative; border-left: 5px solid var(--primary); cursor: pointer; transition: transform 0.2s;}
+        .stage-card:hover { transform: translateY(-2px); }
+        
+        .stage-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid var(--background); padding-bottom: 10px; }
+        .stage-title { font-size: 1.2rem; font-weight: bold; color: var(--primary); margin: 0; }
+        
+        .timer { background: var(--background); padding: 5px 10px; border-radius: 15px; font-size: 0.9rem; font-weight: bold; color: var(--text-light); transition: color 0.3s, background 0.3s; }
+        .timer.active { background: var(--secondary); color: white; }
+        .timer.warning { background: var(--danger); color: white; animation: pulse 1s infinite; }
+        
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        .interactive-btn { background: var(--secondary); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 1rem; font-weight: bold; transition: background 0.2s; }
+        .interactive-btn:hover { background: var(--primary); }
+        .interactive-btn:disabled { background: var(--text-light); cursor: not-allowed; }
+        
+        .code-block { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 6px; font-family: 'Courier New', Courier, monospace; margin: 10px 0; font-size: 1.1rem; overflow-x: auto; }
+        .code-keyword { color: #569cd6; }
+        .code-string { color: #ce9178; }
+        .code-comment { color: #6a9955; }
+        
+        .flex-options { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+        .option-btn { flex: 1; padding: 15px; border: 2px solid var(--border); background: white; border-radius: 6px; cursor: pointer; font-weight: bold; text-align: center; }
+        .option-btn.selected { border-color: var(--secondary); background: #e0f2fe; }
+        .option-btn.correct { border-color: var(--success); background: #d1fae5; color: #065f46; }
+        .option-btn.incorrect { border-color: var(--danger); background: #fee2e2; color: #991b1b; }
+
+        .checkbox-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .checkbox-item input[type="checkbox"] { width: 1.2rem; height: 1.2rem; }
+
+        textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 4px; resize: vertical; min-height: 80px; font-family: inherit; margin-top: 10px;}
+        .code-textarea { font-family: 'Courier New', Courier, monospace; background: #f8fafc; border: 1px solid #cbd5e1; font-size: 1.1rem;}
+
+        .feedback-msg { margin-top: 10px; padding: 10px; border-radius: 4px; display: none; font-weight: bold; }
+        .feedback-msg.success { display: block; background: #d1fae5; color: #065f46; border: 1px solid var(--success); }
+        .feedback-msg.error { display: block; background: #fee2e2; color: #991b1b; border: 1px solid var(--danger); }
+
+        .traffic-light { display: flex; gap: 10px; margin-top: 10px; }
+        .tl-btn { padding: 10px 15px; border: none; border-radius: 20px; font-weight: bold; cursor: pointer; color: white; opacity: 0.5; }
+        .tl-btn.green { background: var(--success); }
+        .tl-btn.yellow { background: var(--accent); }
+        .tl-btn.red { background: var(--danger); }
+        .tl-btn.active { opacity: 1; box-shadow: 0 0 8px rgba(0,0,0,0.3); }
+
+        select.inline-select { padding: 4px; border: 1px solid var(--primary); border-radius: 4px; font-weight: bold; color: var(--primary); background: #eff6ff;}
+
+        .dashboard { background: white; border: 2px solid var(--primary); border-radius: 8px; padding: 20px; margin-top: 30px; }
+        .dashboard h2 { margin-top: 0; color: var(--primary); }
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .checklist { list-style: none; padding: 0; }
+        .checklist li { margin-bottom: 5px; }
+
+        .hint-content { display: none; background: #fffbeb; border-left: 4px solid var(--accent); padding: 10px; margin-top: 10px; font-size: 0.9rem; }
+        
+        /* PRINT STYLES */
+        @media print {
+            body { background: white; color: black; padding: 0; }
+            .container { max-width: 100%; }
+            .score-tracker, .interactive-btn, .hint-btn { display: none !important; }
+            .stage-card { box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; margin-bottom: 10px; padding: 10px; }
+            .timer { color: black; background: none; border: 1px solid #ccc; }
+            .option-btn { border: 1px solid #ccc; }
+            .dashboard { page-break-before: always; }
+            textarea, input[type="text"], input[type="date"] { border: none; border-bottom: 1px solid #ccc; border-radius: 0; background: transparent; box-shadow: none; resize: none; }
+            
+            /* Expand textareas to show all text during print */
+            textarea { height: auto !important; overflow: visible !important; min-height: 50px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Computer Science: Python Programming</h1>
+        <p>Lesson 1: Introduction to Basic Mathematical Operators</p>
+    </header>
+
+    <div class="student-info">
+        <div class="input-group">
+            <label>Student Name</label>
+            <input type="text" id="studentName" placeholder="Enter full name">
+        </div>
+        <div class="input-group">
+            <label>Grade</label>
+            <select id="studentGrade">
+                <option value="">Select Grade...</option>
+                <option value="9">Grade 9</option>
+                <option value="10">Grade 10</option>
+                <option value="11">Grade 11</option>
+                <option value="12">Grade 12</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label>Section</label>
+            <select id="studentSection">
+                <option value="">Select Section...</option>
+                <option value="A">Section A</option>
+                <option value="B">Section B</option>
+                <option value="C">Section C</option>
+                <option value="D">Section D</option>
+                <option value="F">Section F</option>
+                <option value="G">Section G</option>
+                <option value="H">Section H</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label>Date</label>
+            <input type="date" id="lessonDate">
+        </div>
+    </div>
+
+    <div class="score-tracker">
+        <span>🏆 Total Score: <span id="ui-score">0</span> / 25</span>
+        <span style="font-size: 0.8rem; font-weight: normal;">Click any section to start its timer</span>
+    </div>
+
+    <!-- STAGE 1: ENTRY -->
+    <div class="stage-card" onclick="activateStage(1, 2)">
+        <div class="stage-header">
+            <h2 class="stage-title">STAGE 1: ENTRY - The Human Calculator vs. Python</h2>
+            <div class="timer" id="timer-1">⏱ 2:00</div>
+        </div>
+        <p>Look at the mathematical equation below as it would be typed in Python:</p>
+        <div class="code-block">
+            x = 5 + 10 * 2
+        </div>
+        <p>If we print `x`, what do you think Python will output? (Make a guess!)</p>
+        <div class="flex-options" id="stage1-options">
+            <div class="option-btn" onclick="checkStage1(this, 15)">15</div>
+            <div class="option-btn" onclick="checkStage1(this, 25)">25</div>
+            <div class="option-btn" onclick="checkStage1(this, 30)">30</div>
+        </div>
+        <div id="feedback-1" class="feedback-msg"></div>
+    </div>
+
+    <!-- STAGE 2: OBJECTIVE & SUCCESS CRITERIA -->
+    <div class="stage-card" onclick="activateStage(2, 2)">
+        <div class="stage-header">
+            <h2 class="stage-title">STAGE 2: LEARNING OBJECTIVE & SUCCESS CRITERIA</h2>
+            <div class="timer" id="timer-2">⏱ 2:00</div>
+        </div>
+        <p><strong>Learning Objective:</strong> Describe and apply basic mathematical operators (+, -, *, /) in Python to perform calculations and store them in variables.</p>
+        <p><em>Check off these criteria as you feel confident throughout the lesson:</em></p>
+        <div class="checkbox-item">
+            <input type="checkbox" id="sc1"> <label for="sc1">I can write arithmetic expressions using Python syntax.</label>
+        </div>
+        <div class="checkbox-item">
+            <input type="checkbox" id="sc2"> <label for="sc2">I can store the results of calculations inside variables.</label>
+        </div>
+        <div class="checkbox-item">
+            <input type="checkbox" id="sc3"> <label for="sc3">I can output the computed variables clearly to the console.</label>
+        </div>
+    </div>
+
+    <!-- STAGE 3: DO NOW (VOCAB) -->
+    <div class="stage-card" onclick="activateStage(3, 4)">
+        <div class="stage-header">
+            <h2 class="stage-title">STAGE 3: DO NOW - Code Logic Detective</h2>
+            <div class="timer" id="timer-3">⏱ 4:00</div>
+        </div>
+        <p><strong>Target Vocabulary:</strong> Assumption, Evidence, Justify</p>
+        <p>Look at the broken Python code below attempting to multiply 5 and x:</p>
+        <div class="code-block">
+            <span class="code-keyword">x</span> = <span class="code-string">10</span><br>
+            <span class="code-keyword">total</span> = 5x <span class="code-comment"># SyntaxError: invalid syntax</span>
+        </div>
+        <p>Complete the detective's report using the correct vocabulary words:</p>
+        
+        <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid var(--border); line-height: 2;">
+            The coder made an incorrect 
+            <select class="inline-select" id="v1">
+                <option value="">---</option><option value="assumption">assumption</option><option value="evidence">evidence</option><option value="justify">justify</option>
+            </select> 
+            that Python understands standard algebra layout. The 
+            <select class="inline-select" id="v2">
+                <option value="">---</option><option value="assumption">assumption</option><option value="evidence">evidence</option><option value="justify">justify</option>
+            </select>
+            of this mistake is the "SyntaxError" message. To fix it, we must 
+            <select class="inline-select" id="v3">
+                <option value="">---</option><option value="assumption">assumption</option><option value="evidence">evidence</option><option value="justify">justify</option>
+            </select>
+            our code by writing it explicitly as <code>5 * x</code>.
+        </div>
+        <button class="interactive-btn" style="margin-top: 15px;" onclick="checkStage3()">Submit Report</button>
+        <div id="feedback-3" class="feedback-msg"></div>
+    </div>
+
+    <!-- STAGE 4: EXPLICIT INSTRUCTION -->
+    <div class="stage-card" onclick="activateStage(4, 10)">
+        <div class="stage-header">
+            <h2 class="stage-title">STAGE 4: EXPLICIT INSTRUCTION - Teach Time</h2>
+            <div class="timer" id="timer-4">⏱ 10:00</div>
+        </div>
+        <p>In Python, standard math signs look a bit different from math class. Study the table below as the teacher explains.</p>
+        
+        <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+            <tr style="background: var(--primary); color: white;">
+                <th style="padding: 10px; border: 1px solid var(--border);">Operation</th>
+                <th style="padding: 10px; border: 1px solid var(--border);">Math Class</th>
+                <th style="padding: 10px; border: 1px solid var(--border);">Python Syntax</th>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid var(--border);">Addition / Subtraction</td>
+                <td style="padding: 10px; border: 1px solid var(--border);">+, -</td>
+                <td style="padding: 10px; border: 1px solid var(--border);">+, -</td>
+            </tr>
+            <tr style="background: #f9fafb;">
+                <td style="padding: 10px; border: 1px solid var(--border);">Multiplication</td>
+                <td style="padding: 10px; border: 1px solid var(--border);">× or •</td>
+                <td style="padding: 10px; border: 1px solid var(--border); font-weight: bold; color: var(--danger);">* (Asterisk)</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid var(--border);">Division</td>
+                <td style="padding: 10px; border: 1px solid var(--border);">÷ or fraction</td>
+                <td style="padding: 10px; border: 1px solid var(--border); font-weight: bold; color: var(--danger);">/ (Forward Slash)</td>
+            </tr>
+        </table>
+
+        <div style="background: #fffbeb; border-left: 4px solid var(--accent); padding: 10px; margin-top: 15px;">
+            <strong>⚠️ CRITICAL MISCONCEPTION:</strong> The <code>=</code> symbol does NOT mean "equals". It is an <strong>Assignment Operator</strong>. It computes the math on the right side and <em>stores</em> it in the variable on the left side.
+        </div>
+    </div>
+
+    <!-- STAGE 5: TEACHER MODEL -->
+    <div class="stage-card" onclick="activateStage(5, 5)">
+        <div class="stage-header">
+            <h2 class="stage-title">STAGE 5: TEACHER MODEL (I Do)</h2>
+            <div class="timer" id="timer-5">⏱ 5:00</div>
+        </div>
+        <p>Watch as the teacher models how to calculate a weekly allowance and store it in a variable.</p>
+        
+        <div class="code-block" id="model-code">
+            <span class="code-comment"># Goal: 15 dollars standard allowance + 5 for chores</span><br>
+            <span style="opacity: 0.3;" id="model-step1">allowance = 15 + 5</span><br>
+            <span style="opacity: 0.3;" id="model-step2">print(allowance)</span>
+        </div>
+        
+        <button class="interactive-btn" onclick="revealModelStep()">Reveal Next Step</button>
+        <p id="model-prediction" style="display:none; font-weight: bold; color: var(--primary);">Think Aloud: What happens if I forget to use print()? (Answer: The computer knows the answer, but humans won't see it!)</p>
+    </div>
+
+    <!-- STAGE 6: GUIDED PRACTICE -->
+    <div class="stage-card" onclick="activateStage(6, 8)">
+        <div class="stage-header">
+            <h2 class="stage-title">STAGE 6: GUIDED PRACTICE (We Do)</h2>
+            <div class="timer" id="timer-6">⏱ 8:00</div>
+        </div>
+        <p><strong>Collaborative Task:</strong> Let's calculate the total cost of 3 video games that cost 40 dollars each.</p>
+        <p>Help complete the code by selecting the correct variables and operators.</p>
+        
+        <div class="code-block" style="line-height: 2;">
+            games = <span class="code-string">3</span><br>
+            price = <span class="code-string">40</span><br>
+            total_cost = 
+            <select class="inline-select" id="gp1">
+                <option value="">--</option><option value="games">games</option><option value="price">price</option>
+            </select> 
+            <select class="inline-select" id="gp2">
+                <option value="">--</option><option value="+">+</option><option value="*">*</option><option value="/">/</option>
+            </select> 
+            <select class="inline-select" id="gp3">
+                <option value="">--</option><option value="games">games</option><option value="price">price</option>
+            </select><br>
+            <select class="inline-select" id="gp4">
+                <option value="">--</option><option value="print">print</option><option value="show">show</option>
+            </select>(total_cost)
+        </div>
+        <button class="interactive-btn" style="margin-top: 15px;" onclick="checkStage6()">Check Collaborative Code</button>
+        <button class="interactive-btn hint-btn" style="background: #6b7280; margin-left: 10px;" onclick="document.getElementById('hint6').style.display='block'">Need a Hint?</button>
+        <div id="hint6" class="hint-content">Hint: We want to multiply the number of games by the price of one game.</div>
+        <div id="feedback-6" class="feedback-msg"></div>
+    </div>
+
+    <!-- STAGE 7: INDEPENDENT APPLICATION -->
+    <div class="stage-card" onclick="activateStage(7, 10)">
+        <div class="stage-header">
+            <h2 class="stage-title">STAGE 7: INDEPENDENT APPLICATION (You Do)</h2>
+            <div class="timer" id="timer-7">⏱ 10:00</div>
+        </div>
+        <p><strong>Task:</strong> Write a short Python program that calculates the number of hours in a standard year.</p>
+        <ul style="font-size: 0.9rem;">
+            <li><strong>Support:</strong> Use variables <code>days_in_year = 365</code> and <code>hours_in_day = 24</code>.</li>
+            <li><strong>Core:</strong> Multiply them together and store in a variable called <code>total_hours</code>, then print it.</li>
+            <li><strong>Stretch:</strong> Add another line to calculate the number of <em>minutes</em> in a year.</li>
+        </ul>
+        
+        <textarea id="stage7-code" class="code-textarea" rows="6" placeholder="# Type your Python code here...&#10;"></textarea>
+        
+        <button class="interactive-btn" onclick="checkStage7()">Run Code Check</button>
+        <div id="feedback-7" class="feedback-msg"></div>
+    </div>
+
+    <!-- STAGE 8: PROGRESS CHECK -->
+    <div class="stage-card" onclick="activateStage(8, 5)">
+        <div class="stage-header">
+            <h2 class="stage-title">STAGE 8: HIGH-IMPACT PROGRESS CHECK</h2>
+            <div class="timer" id="timer-8">⏱ 5:00</div>
+        </div>
+        <p><strong>Code Tracing Challenge:</strong> Read the code below. What is the EXACT output?</p>
+        <div class="code-block">
+            x = 10<br>
+            y = 2<br>
+            z = x / y<br>
+            print(z)
+        </div>
+        
+        <div class="flex-options" style="flex-direction: column;">
+            <label style="display: block; padding: 10px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer;">
+                <input type="radio" name="q8" value="5"> A) 5
+            </label>
+            <label style="display: block; padding: 10px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer;">
+                <input type="radio" name="q8" value="5.0"> B) 5.0
+            </label>
+            <label style="display: block; padding: 10px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer;">
+                <input type="radio" name="q8" value="error"> C) Syntax Error
+            </label>
+        </div>
+        <button class="interactive-btn" style="margin-top: 15px;" onclick="checkStage8()">Submit Answer</button>
+        <div id="feedback-8" class="feedback-msg"></div>
+
+        <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
+        <p><strong>Self-Assessment:</strong> How well can you write basic arithmetic expressions in Python?</p>
+        <div class="traffic-light">
+            <button class="tl-btn green" onclick="setTrafficLight(this, 'Independently')">🟢 Independently</button>
+            <button class="tl-btn yellow" onclick="setTrafficLight(this, 'With Help')">🟡 With Help</button>
+            <button class="tl-btn red" onclick="setTrafficLight(this, 'Need Practice')">🔴 Need Practice</button>
+        </div>
+        <input type="hidden" id="tl-status" value="Not set">
+    </div>
+
+    <!-- STAGE 9: FEEDBACK & ADJUSTMENT -->
+    <div class="stage-card" onclick="activateStage(9, 5)">
+        <div class="stage-header">
+            <h2 class="stage-title">STAGE 9: FEEDBACK & INSTRUCTIONAL ADJUSTMENT</h2>
+            <div class="timer" id="timer-9">⏱ 5:00</div>
+        </div>
+        
+        <div class="input-group" style="margin-bottom: 15px;">
+            <label>What is one mistake you learned how to correct today? (Or one new thing you understood?)</label>
+            <textarea id="reflection1" rows="2" placeholder="I learned that..."></textarea>
+        </div>
+        
+        <div class="input-group">
+            <label>What concept do you feel you still need to practice?</label>
+            <textarea id="reflection2" rows="2" placeholder="I need to practice..."></textarea>
+        </div>
+
+        <div class="input-group" style="margin-top: 15px; border-top: 2px dashed var(--border); padding-top: 15px;">
+            <label style="color: var(--danger);">Teacher Use Only: Instructional Adjustment</label>
+            <select id="teacherAdjustment" style="max-width: 300px;">
+                <option value="Pending">Pending Review</option>
+                <option value="Reteach">Reteach Concepts</option>
+                <option value="Re-model">Re-model Syntax</option>
+                <option value="Regroup">Regroup for Collaborative Support</option>
+                <option value="Extend">Ready for Extension Task</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="dashboard" id="dashboard">
+        <h2>MISSION COMPLETE: Dashboard</h2>
+        <div class="dashboard-grid">
+            <div>
+                <strong>Student:</strong> <span id="dash-name">---</span><br>
+                <strong>Grade/Section:</strong> <span id="dash-grade">---</span> / <span id="dash-section">---</span><br>
+                <strong>Date:</strong> <span id="dash-date">---</span><br>
+                <strong>Final Score:</strong> <span id="dash-score">0</span> / 25<br>
+                <strong>Self-Assessment:</strong> <span id="dash-tl">Not set</span>
+            </div>
+            <div>
+                <strong>Time Spent per Stage:</strong>
+                <ul class="checklist" id="time-log" style="font-size: 0.85rem; font-family: monospace;">
+                    <li>Stage 1: <span id="log-1">0s</span></li>
+                    <li>Stage 2: <span id="log-2">0s</span></li>
+                    <li>Stage 3: <span id="log-3">0s</span></li>
+                    <li>Stage 4: <span id="log-4">0s</span></li>
+                    <li>Stage 5: <span id="log-5">0s</span></li>
+                    <li>Stage 6: <span id="log-6">0s</span></li>
+                    <li>Stage 7: <span id="log-7">0s</span></li>
+                    <li>Stage 8: <span id="log-8">0s</span></li>
+                    <li>Stage 9: <span id="log-9">0s</span></li>
+                </ul>
+            </div>
+        </div>
+        <button class="interactive-btn" style="width: 100%; margin-top: 20px; font-size: 1.2rem;" onclick="generatePDF()">🖨️ Export / Print to PDF</button>
+    </div>
+
+</div>
+
+<script>
+    // System Variables
+    let score = 0;
+    const maxScore = 25;
+    let completedStages = new Set();
+    
+    // Timer System
+    let stageTimers = {};
+    let activeIntervals = {};
+
+    function updateScore(points) {
+        score += points;
+        document.getElementById('ui-score').innerText = score;
+        document.getElementById('dash-score').innerText = score;
+    }
+
+    function activateStage(stageNum, minutes) {
+        if (stageTimers[stageNum]) return; // Already activated
+        
+        let seconds = minutes * 60;
+        let elapsed = 0;
+        let timerEl = document.getElementById('timer-' + stageNum);
+        let logEl = document.getElementById('log-' + stageNum);
+        
+        timerEl.classList.add('active');
+        stageTimers[stageNum] = true;
+
+        activeIntervals[stageNum] = setInterval(() => {
+            seconds--;
+            elapsed++;
+            
+            let m = Math.floor(seconds / 60);
+            let s = seconds % 60;
+            timerEl.innerText = `⏱ ${m}:${s.toString().padStart(2, '0')}`;
+            logEl.innerText = `${Math.floor(elapsed/60)}m ${elapsed%60}s`;
+
+            if (seconds <= 60 && seconds > 0) {
+                timerEl.classList.add('warning');
+            }
+
+            if (seconds <= 0) {
+                clearInterval(activeIntervals[stageNum]);
+                timerEl.innerText = "⏱ Time Up";
+                timerEl.classList.remove('warning');
+                timerEl.style.background = 'var(--danger)';
+            }
+        }, 1000);
+    }
+
+    // Stage 1 Logic (5 points)
+    function checkStage1(btn, value) {
+        if(completedStages.has(1)) return;
+        
+        let btns = document.getElementById('stage1-options').children;
+        for(let b of btns) b.classList.remove('selected', 'correct', 'incorrect');
+        
+        btn.classList.add('selected');
+        let fb = document.getElementById('feedback-1');
+        
+        if(value === 25) {
+            btn.classList.add('correct');
+            fb.innerHTML = "✅ Correct! Python does multiplication BEFORE addition (Order of Operations). 10 * 2 = 20, then 20 + 5 = 25.";
+            fb.className = "feedback-msg success";
+            updateScore(5);
+        } else {
+            btn.classList.add('incorrect');
+            fb.innerHTML = "❌ Not quite. Remember Order of Operations (PEMDAS)? Multiplication happens before addition!";
+            fb.className = "feedback-msg error";
+            updateScore(1); // 1 point for trying
+        }
+        completedStages.add(1);
+    }
+
+    // Stage 3 Logic (5 points)
+    function checkStage3() {
+        if(completedStages.has(3)) return;
+        let v1 = document.getElementById('v1').value;
+        let v2 = document.getElementById('v2').value;
+        let v3 = document.getElementById('v3').value;
+        let fb = document.getElementById('feedback-3');
+
+        if(v1 === 'assumption' && v2 === 'evidence' && v3 === 'justify') {
+            fb.innerHTML = "✅ Excellent Code Logic Detective work!";
+            fb.className = "feedback-msg success";
+            updateScore(5);
+        } else {
+            fb.innerHTML = "❌ Keep trying. Hint: Programmers make an 'assumption', the error provides 'evidence', and the fix is how we 'justify' it.";
+            fb.className = "feedback-msg error";
+            return; // Don't mark complete yet
+        }
+        completedStages.add(3);
+    }
+
+    // Stage 5 Logic
+    let modelStep = 0;
+    function revealModelStep() {
+        if (modelStep === 0) {
+            document.getElementById('model-step1').style.opacity = "1";
+            modelStep++;
+        } else if (modelStep === 1) {
+            document.getElementById('model-step2').style.opacity = "1";
+            document.getElementById('model-prediction').style.display = "block";
+            modelStep++;
+        }
+    }
+
+    // Stage 6 Logic (5 points)
+    function checkStage6() {
+        if(completedStages.has(6)) return;
+        let gp1 = document.getElementById('gp1').value;
+        let gp2 = document.getElementById('gp2').value;
+        let gp3 = document.getElementById('gp3').value;
+        let gp4 = document.getElementById('gp4').value;
+        let fb = document.getElementById('feedback-6');
+
+        if((gp1 === 'games' || gp1 === 'price') && (gp3 === 'games' || gp3 === 'price') && gp2 === '*' && gp4 === 'print' && gp1 !== gp3) {
+            fb.innerHTML = "✅ Perfect collaborative code! You correctly assigned variables and multiplied them.";
+            fb.className = "feedback-msg success";
+            updateScore(5);
+            completedStages.add(6);
+        } else {
+            fb.innerHTML = "❌ Almost. Ensure you are multiplying (*) the two variables, and outputting with 'print'.";
+            fb.className = "feedback-msg error";
+        }
+    }
+
+    // Stage 7 Logic (5 points)
+    function checkStage7() {
+        let code = document.getElementById('stage7-code').value;
+        let fb = document.getElementById('feedback-7');
+        
+        // Simple heuristic checking for sandbox
+        let hasDays = code.includes('365');
+        let hasHours = code.includes('24');
+        let hasMult = code.includes('*');
+        let hasPrint = code.includes('print');
+
+        if (hasDays && hasHours && hasMult && hasPrint) {
+            fb.innerHTML = "✅ Excellent! Your logic contains the correct data (365, 24), operator (*), and output (print).";
+            fb.className = "feedback-msg success";
+            if(!completedStages.has(7)) {
+                updateScore(5);
+                completedStages.add(7);
+            }
+        } else {
+            fb.innerHTML = "❌ Code Analysis: Missing required elements. Ensure you typed 365, 24, used the * operator, and used the print command.";
+            fb.className = "feedback-msg error";
+        }
+    }
+
+    // Stage 8 Logic (5 points)
+    function checkStage8() {
+        if(completedStages.has(8)) return;
+        let selected = document.querySelector('input[name="q8"]:checked');
+        let fb = document.getElementById('feedback-8');
+
+        if(!selected) {
+            fb.innerHTML = "Please select an answer.";
+            fb.className = "feedback-msg error";
+            return;
+        }
+
+        if(selected.value === '5.0') {
+            fb.innerHTML = "✅ Correct! In Python, standard division (/) ALWAYS returns a decimal (float), so 10 / 2 is 5.0, not 5.";
+            fb.className = "feedback-msg success";
+            updateScore(5);
+        } else {
+            fb.innerHTML = "❌ Incorrect. Remember: Python division (/) always turns the answer into a decimal (float). It is 5.0.";
+            fb.className = "feedback-msg error";
+            updateScore(1);
+        }
+        completedStages.add(8);
+    }
+
+    function setTrafficLight(btn, status) {
+        let btns = document.querySelectorAll('.tl-btn');
+        btns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tl-status').value = status;
+        document.getElementById('dash-tl').innerText = status;
+    }
+
+    // Live Dashboard Updating & Print Pre-processor
+    function updateDashboardInfo() {
+        document.getElementById('dash-name').innerText = document.getElementById('studentName').value || "Not provided";
+        document.getElementById('dash-grade').innerText = document.getElementById('studentGrade').value || "N/A";
+        document.getElementById('dash-section').innerText = document.getElementById('studentSection').value || "N/A";
+        document.getElementById('dash-date').innerText = document.getElementById('lessonDate').value || "N/A";
+        
+        // Ensure textareas render their text in print view (safeguard for some browsers)
+        document.querySelectorAll('textarea').forEach(t => {
+            t.textContent = t.value; 
+        });
+    }
+
+    // Bind inputs to dashboard updates
+    document.getElementById('studentName').addEventListener('input', updateDashboardInfo);
+    document.getElementById('studentGrade').addEventListener('change', updateDashboardInfo);
+    document.getElementById('studentSection').addEventListener('change', updateDashboardInfo);
+    document.getElementById('lessonDate').addEventListener('change', updateDashboardInfo);
+
+    function generatePDF() {
+        updateDashboardInfo();
+        // Pause timers for printing so they don't look weird
+        for(let t in activeIntervals) clearInterval(activeIntervals[t]);
+        
+        window.print();
+    }
+</script>
+
+</body>
+</html>

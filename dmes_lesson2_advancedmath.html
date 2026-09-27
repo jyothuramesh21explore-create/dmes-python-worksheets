@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DMES Interactive Lesson 2 - Advanced Math & PEMDAS</title>
+    <style>
+        :root {
+            --primary: #1e3a8a; /* Deep Blue */
+            --secondary: #3b82f6; /* Blue */
+            --accent: #8b5cf6; /* Purple for Advanced Math */
+            --background: #f3f4f6;
+            --surface: #ffffff;
+            --text-main: #1f2937;
+            --text-light: #6b7280;
+            --success: #10b981;
+            --danger: #ef4444;
+            --border: #e5e7eb;
+        }
+
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        body { background-color: var(--background); color: var(--text-main); line-height: 1.6; padding: 20px; margin: 0; }
+        
+        .container { max-width: 900px; margin: 0 auto; }
+        
+        header { background-color: var(--primary); color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center; border-bottom: 4px solid var(--accent); }
+        header h1 { margin: 0 0 10px 0; font-size: 1.8rem; }
+        
+        .student-info { background: var(--surface); padding: 15px; border-radius: 0 0 8px 8px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .input-group { display: flex; flex-direction: column; }
+        .input-group label { font-size: 0.85rem; font-weight: bold; color: var(--text-light); margin-bottom: 5px; }
+        .input-group input, .input-group select { padding: 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 1rem; }
+        
+        .score-tracker { position: sticky; top: 10px; background: var(--accent); color: white; padding: 10px 20px; border-radius: 20px; font-weight: bold; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 100; display: flex; justify-content: space-between; align-items: center;}
+        
+        .stage-card { background: var(--surface); border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: relative; border-left: 5px solid var(--primary); cursor: pointer; transition: transform 0.2s;}
+        .stage-card:hover { transform: translateY(-2px); }
+        
+        .stage-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid var(--background); padding-bottom: 10px; }
+        .stage-title { font-size: 1.2rem; font-weight: bold; color: var(--primary); margin: 0; }
+        
+        .timer { background: var(--background); padding: 5px 10px; border-radius: 15px; font-size: 0.9rem; font-weight: bold; color: var(--text-light); transition: color 0.3s, background 0.3s; }
+        .timer.active { background: var(--secondary); color: white; }
+        .timer.warning { background: var(--danger); color: white; animation: pulse 1s infinite; }
+        
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        .interactive-btn { background: var(--secondary); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 1rem; font-weight: bold; transition: background 0.2s; }
+        .interactive-btn:hover { background: var(--primary); }
+        .interactive-btn:disabled { background: var(--text-light); cursor: not-allowed; }
+        
+        .code-block { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 6px; font-family: 'Courier New', Courier, monospace; margin: 10px 0; font-size: 1.1rem; overflow-x: auto; }
+        .code-keyword { color: #c586c0; } /* Purple for advanced operators */
+        .code-string { color: #ce9178; }
+        .code-comment { color: #6a9955; }
+        
+        .flex-options { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; justify-content: center; }
+        .option-btn { flex: 1; padding: 15px; border: 2px solid var(--border); background: white; border-radius: 6px; cursor: pointer; font-weight: bold; text-align: center; font-size: 1.5rem; transition: all 0.2s; min-width: 80px;}
+        .option-btn.selected { border-color: var(--secondary); background: #e0f2fe; }
+        .option-btn.correct { border-color: var(--success); background: #d1fae5; color: #065f46; transform: scale(1.05); }
+        .option-btn.incorrect { border-color: var(--danger); background: #fee2e2; color: #991b1b; }
+
+        .checkbox-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .checkbox-item input[type="checkbox"] { width: 1.2rem; height: 1.2rem; }
+
+        textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 4px; resize: vertical; min-height: 80px; font-family: inherit; margin-top: 10px;}
+        .code-textarea { font-family: 'Courier New', Courier, monospace; background: #f8fafc; border: 1px solid #cbd5e1; font-size: 1.1rem;}
+
+        .feedback-msg { margin-top: 10px; padding: 10px; border-radius: 4px; display: none; font-weight: bold; }
+        .feedback-msg.success { display: block; background: #d1fae5; color: #065f46; border: 1px solid var(--success); }
+        .feedback-msg.error { display: block; background: #fee2e2; color: #991b1b; border: 1px solid var(--danger); }
+
+        .traffic-light { display: flex; gap: 10px; margin-top: 10px; }
+        .tl-btn { padding: 10px 15px; border: none; border-radius: 20px; font-weight: bold; cursor: pointer; color: white; opacity: 0.5; }
+        .tl-btn.green { background: var(--success); }
+        .tl-btn.yellow { background: var(--accent); }
+        .tl-btn.red { background: var(--danger); }
+        .tl-btn.active { opacity: 1; box-shadow: 0 0 8px rgba(0,0,0,0.3); }
+
+        select.inline-select { padding: 4px; border: 1px solid var(--primary); border-radius: 4px; font-weight: bold; color: var(--primary); background: #eff6ff;}
+
+        .dashboard { background: white; border: 2px solid var(--primary); border-radius: 8px; padding: 20px; margin-top: 30px; }
+        .dashboard h2 { margin-top: 0; color: var(--primary); }
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .checklist { list-style: none; padding: 0; }
+        .checklist li { margin-bottom: 5px; }
+
+        .hint-content { display: none; background: #fffbeb; border-left: 4px solid var(--accent); padding: 10px; margin-top: 10px; font-size: 0.9rem; }
+        
+        .math-table { width: 100%; border-collapse: collapse; margin-top: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .math-table th { background: var(--primary); color: white; padding: 12px; text-align: left; }
+        .math-table td { padding: 12px; border-bottom: 1px solid var(--border); }
+        .math-table tr:nth-child(even) { background: #f9fafb; }
+        .math-table code { background: #e2e8f0; padding: 2px 6px; border-radius: 4px; color: var(--danger); font-weight: bold;}
+        
+        @media print {
+            body { background: white; color: black; padding: 0; }
+            .container { max-width: 100%; }
+            .score-tracker, .interactive-btn, .hint-btn { display: none !important; }
+            .stage-card { box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; margin-bottom: 10px; padding: 10px; }
+            .timer { color: black; background: none; border: 1px solid #ccc; }
+            .option-btn { border: 1px solid #ccc; }
+            .dashboard { page-break-before: always; }
+            textarea, input[type="text"], input[type="date"] { border: none; border-bottom: 1px solid #ccc; border-radius: 0; background: transparent; box-shadow: none; resize: none; }
+            textarea { height: auto !important; overflow: visible !important; min-height: 50px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Computer Science: Python Programming</h1>
+        <p>Lesson 2: Advanced Operators and Precedence (PEMDAS)</p>
+    </header>
+
+    <div class="student-info">
+        <div class="input-group">
+            <label>Student Name</label>
+            <input type="text" id="studentName" placeholder="Enter full name">
+        </div>
+        <div class="input-group">
+            <label>Grade</label>
+            <select id="studentGrade">
+                <option value="">Select Grade...</option>
+                <option value="9">Grade 9</option>
+                <option value="10">Grade 10</option>
+                <option value="11">Grade 11</option>
+                <option value="12">Grade 12</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label>Section</label>
+            <select id="studentSection">
+                <option value="">Select Section...</option>
+                <option value="A">Section A</option>
+                <option value="B">Section B</option>
+                <option value="C">Section C</option>
+                <option value="D">Section D</option>
+                <option value="F">Section F</option>
+                <option value="G">Section G</option>
+                <option value="H">Section H</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label>Date</label>
+            <input type="date" id="lessonDate">
+        </div>
+    </div>
+
+    <div class="score-tracker">
+        <span>🏆 Total Score: <span id="ui-score">0</span> / 30</span>
+        <span style="font-size: 0.8rem; font-weight: normal;">Click any section to start its timer</span>
+    </div>
+
+    <!-- STAGE 1: ENTRY -->
+    <div class="stage-card" onclick="activateStage(1, 2)">
+        <div class="stage-header">
+            <h2 class="stage-title">STAGE 1: ENTRY - The "Odd One Out" Puzzle</h2>
+            <div class="timer" id="timer-1">⏱ 2:00</div>
+        </div>
+        <p>Look at the four Python operators below. Three of them perform standard math you learned in elementary school. One of them does something very different in programming.</p>
+        <p><strong>Click on the one you think is the "Odd One Out":</strong></p>
+        
+        <div class="flex-options" id="stage1-options">
+            <div class="option-btn" onclick="checkStage1(this, '+')">+</div>
+            <div class="option-btn" onclick="checkStage1(this, '-')">-</div>
+            <div class="option-btn" onclick="checkStage1(this, '*')">*</div>
+            <div class="option-btn" onclick="checkStage1(this, '%')">%</div>
+        </div>
+        <div id="feedback-1" class="feedback-msg"></div>
+    </div>
+
+    <!-- STAGE 2: OBJECTIVE & SUCCESS CRITERIA -->
+    <div class="stage-card" onclick="activateStage(2, 2)">
+        <div class="stage-header">
+            <h2 class="stage-title">STAGE 2: LEARNING OBJECTIVE & SUCCESS CRITERIA</h2>
+            <div class="timer" id="timer-2">⏱ 2:00</div>
+        </div>
+        <p><strong>Learning Objective:</strong> Evaluate arithmetic expressions using advanced operators (modulus %, floor division //, exponentiation **) and Python's strict order of operations (PEMDAS).</p>
+        <p><em>Check off these criteria as you feel confident throughout the lesson:</em></p>
+        <div class="checkbox-item">
+            <input type="checkbox" id="sc1"> <label for="sc1">I can differentiate between <code>/</code> (division) and <code>//</code> (floor division).</label>
+        </div>
+        <div class="checkbox-item">
+            <input type="checkbox" id="sc2"> <label for="sc2">I can use the modulus operator <code>%</code> to find a remainder.</label>
+        </div>
+        <div class="checkbox-item">
+            <input type="checkbox" id="sc3"> <label for="sc3">I can predict the outcome of a complex expression by applying PEMDAS.</label>
+        </div>
+    </div>
+
+    <!-- STAGE 3: DO NOW (VOCAB) -->
+    <div class="stage-card" onclick="activateStage(3, 4)">
+        <div class="stage-header">
+            <h2 class="stage-title">STAGE 3: DO NOW - Sorting the Concepts</h2>
+            <div class="timer" id="timer-3">⏱ 4:00</div>
+        </div>
+        <p><strong>Target Vocabulary:</strong> Conclusion, Compare, Distinguish</p>
+        <p>Look at these two math expressions:</p>
+        <div class="code-block" style="text-align: center;">
+            <span style="margin-right: 40px;">Expression A: <code>7 / 2</code></span>
+            <span>Expression B: <code>7 // 2</code></span>
+        </div>
+        <p>Complete the logic sentence below using the target vocabulary words:</p>
+        
+        <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid var(--border); line-height: 2;">
+            To 
+            <select class="inline-select" id="v1">
+                <option value="">---</option><option value="conclusion">conclusion</option><option value="compare">compare</option><option value="distinguish">distinguish</option>
+            </select> 
+            Expression A and Expression B, we must run them in our head and 
+            <select class="inline-select" id="v2">
+                <option value="">---</option><option value="conclusion">conclusion</option><option value="compare">compare</option><option value="distinguish">distinguish</option>
+            </select>
+            the difference in their outputs. Because `7 / 2 = 3.5` and `7 // 2 = 3`, my 
+            <select class="inline-select" id="v3">
+                <option value="">---</option><option value="conclusion">conclusion</option><option value="compare">compare</option><option value="distinguish">distinguish</option>
+            </select>
+            is that the double slash `//` chops off the decimal!
+        </div>
+        <button class="interactive-btn" style="margin-top: 15px;" onclick="checkStage3()">Submit Logic</button>
+        <div id="feedback-3" class="feedback-msg"></div>
+    </div>
+
+    <!-- STAGE 4: EXPLICIT INSTRUCTION -->
+    <div class="stage-card" onclick="activateStage(4, 10)">
+        <div class="stage-header">
+            <h2 class="stage-title">STAGE 4: EXPLICIT INSTRUCTION - Teach Time</h2>
+            <div class="timer" id="timer-4">⏱ 10:00</div>
+        </div>
+        <p>Python has special operators that do very specific, powerful things. Review the table below as the teacher explains.</p>
+        
+        <table class="math-table">
+            <tr>
+                <th>Operator</th>
+                <th>Name</th>
+                <th>What it does</th>
+                <th>Example</th>
+            </tr>
+            <tr>
+                <td><code>**</code></td>
+                <td>Exponentiation</td>
+                <td>Raises a number to a power.</td>
+                <td><code>3 ** 2</code> is 9 (3²)</td>
+            </tr>
+            <tr>
+                <td><code>//</code></td>
+                <td>Floor Division</td>
+                <td>Divides and throws away the decimal (rounds down).</td>
+                <td><code>10 // 3</code> is 3</td>
+            </tr>
+            <tr>
+                <td><code>%</code></td>
+                <td>Modulus</td>
+                <td>Divides, but ONLY gives you the <strong>remainder</strong>.</td>
+                <td><code>10 % 3</code> is 1 (3 goes into 10 three times, 1 left over)</td>
+            </tr>
+        </table>
+
+        <div style="background: #fee2e2; border-left: 4px solid var(--danger); padding: 10px; margin-top: 15px;">
+            <strong>⚠️ CRITICAL MISCONCEPTION:</strong> The <code>%</code> symbol does <strong>NOT</strong> mean percentage in Python! It is the Modulus operator (the "leftovers" operator). It is incredibly useful for finding even/odd numbers (e.g., <code>x % 2 == 0</code>).
+        </div>
+
+        <h3 style="color: var(--primary); margin-top: 20px;">Strict PEMDAS in Python</h3>
+        <ol style="background: #eff6ff; padding: 15px 15px 15px 35px; border-radius: 6px;">
+            <li><strong>P</strong>arentheses <code>()</code></li>
+            <li><strong>E</strong>xponents <code>**</code></li>
+            <li><strong>M</strong>ultiplication, <strong>D</strong>ivision, Floor <code>//</code>, Modulus <code>%</code> <em>(Left to Right)</em></li>
+            <li><strong>A</strong>ddition, <strong>S</strong>ubtraction <em>(Left to Right)</em></li>
+        </ol>
+    </div>
+
+    <!-- STAGE 5: TEACHER MODEL -->
+    <div class="stage-card" onclick="activateStage(5, 5)">
+        <div class="stage-header">
+            <h2 class="stage-title">STAGE 5: TEACHER MODEL (I Do)</h2>
+            <div class="timer" id="timer-5">⏱ 5:00</div>
+        </div>
+        <p>Watch how Python evaluates this complex expression using strict order of operations.</p>
+        
+        <div class="code-block" style="font-size: 1.3rem;">
+            result = 5 + 2 ** 3 % 4
+        </div>
+        
+        <div id="model-trace" style="background: #f8fafc; border: 1px solid var(--border); padding: 15px; border-radius: 6px; margin-top: 10px;">
+            <p style="margin:0; font-weight:bold; color: var(--text-light);">Tracing the computer's logic...</p>
+            <div id="trace-1" style="display:none; margin-top: 10px;">
+                <span style="color: var(--danger); font-weight: bold;">Step 1 (Exponents):</span> <code>2 ** 3</code> becomes 8.<br>
+                <span style="color: #6b7280; font-size: 0.9rem;">Expression is now: 5 + 8 % 4</span>
+            </div>
+            <div id="trace-2" style="display:none; margin-top: 10px;">
+                <span style="color: var(--danger); font-weight: bold;">Step 2 (Modulus):</span> <code>8 % 4</code> becomes 0 (4 goes into 8 evenly).<br>
+                <span style="color: #6b7280; font-size: 0.9rem;">Expression is now: 5 + 0</span>
+            </div>
+            <div id="trace-3" style="display:none; margin-top: 10px; font-weight: bold; color: var(--success); font-size: 1.2rem;">
+                Step 3 (Addition): result = 5
+            </div>
+        </div>
+        
+        <button class="interactive-btn" style="margin-top: 15px;" id="btn-model" onclick="revealModelStep()">Run Next Step</button>
+    </div>
+
+    <!-- STAGE 6: GUIDED PRACTICE -->
+    <div class="stage-card" onclick="activateStage(6, 8)">
+        <div class="stage-header">
+            <h2 class="stage-title">STAGE 6: GUIDED PRACTICE (We Do)</h2>
+            <div class="timer" id="timer-6">⏱ 8:00</div>
+        </div>
+        <p><strong>Collaborative Task:</strong> Evaluate the following expression together. Which part does Python compute first, second, and third?</p>
+        
+        <div class="code-block" style="text-align: center; font-size: 1.4rem;">
+            (10 - 2) * 3 // 2
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 10px; background: white; padding: 15px; border: 1px solid var(--border); border-radius: 6px;">
+            <div>
+                <strong>First Action:</strong> 
+                <select class="inline-select" id="gp1">
+                    <option value="">-- Choose Operator --</option>
+                    <option value="()">Parentheses (10 - 2)</option>
+                    <option value="*">Multiply * 3</option>
+                    <option value="//">Floor Divide // 2</option>
+                </select>
+            </div>
+            <div>
+                <strong>Second Action:</strong> 
+                <select class="inline-select" id="gp2">
+                    <option value="">-- Choose Operator --</option>
+                    <option value="()">Parentheses (10 - 2)</option>
+                    <option value="*">Multiply * 3</option>
+                    <option value="//">Floor Divide // 2</option>
+                </select>
+                <span style="font-size: 0.85rem; color: var(--text-light); margin-left: 10px;">(Remember: Left-to-right for equal precedence!)</span>
+            </div>
+            <div>
+                <strong>Third Action:</strong> 
+                <select class="inline-select" id="gp3">
+                    <option value="">-- Choose Operator --</option>
+                    <option value="()">Parentheses (10 - 2)</option>
+                    <option value="*">Multiply * 3</option>
+                    <option value="//">Floor Divide // 2</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="interactive-btn" style="margin-top: 15px;" onclick="checkStage6()">Verify Execution Order</button>
+        <button class="interactive-btn hint-btn" style="background: #6b7280; margin-left: 10px;" onclick="document.getElementById('hint6').style.display='block'">Need a Hint?</button>
+        
+        <div id="hint6" class="hint-content">Hint: Parentheses always win. Then, multiplication and division are on the SAME level, so you must read them left-to-right!</div>
+        <div id="feedback-6" class="feedback-msg"></div>
+    </div>
+
+    <!-- STAGE 7: INDEPENDENT APPLICATION -->
+    <div class="stage-card" onclick="activateStage(7, 10)">
+        <div class="stage-header">
+            <h2 class="stage-title">STAGE 7: INDEPENDENT APPLICATION (You Do)</h2>
+            <div class="timer" id="timer-7">⏱ 10:00</div>
+        </div>
+        <p><strong>Task:</strong> It is time to create your own complex math expressions. Write Python code in the sandbox below to solve the following challenges.</p>
+        <ul style="font-size: 0.9rem; margin-bottom: 15px;">
+            <li><strong>Support:</strong> Write an expression using Floor Division <code>//</code> to find how many whole weeks are in 365 days. (Assign to a variable and print).</li>
+            <li><strong>Core:</strong> Write an expression using Modulus <code>%</code> to find out how many days are left over after finding the whole weeks in a 365-day year.</li>
+            <li><strong>Stretch (Mastery):</strong> Write a single expression that evaluates EXACTLY to 42 using at least 4 different operators.</li>
+        </ul>
+        
+        <textarea id="stage7-code" class="code-textarea" rows="8" placeholder="# Type your Python code here...&#10;"></textarea>
+        
+        <button class="interactive-btn" onclick="checkStage7()">Run Code Analysis</button>
+        <div id="feedback-7" class="feedback-msg"></div>
+    </div>
+
+    <!-- STAGE 8: PROGRESS CHECK -->
+    <div class="stage-card" onclick="activateStage(8, 5)">
+        <div class="stage-header">
+            <h2 class="stage-title">STAGE 8: HIGH-IMPACT PROGRESS CHECK</h2>
+            <div class="timer" id="timer-8">⏱ 5:00</div>
+        </div>
+        <p><strong>Hinge Question Challenge:</strong> Read the code below. What is the EXACT output printed to the console?</p>
+        <div class="code-block" style="font-size: 1.5rem; text-align: center;">
+            print(11 % 3)
+        </div>
+        
+        <div class="flex-options" style="flex-direction: column; gap: 8px;">
+            <label style="display: block; padding: 12px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; background: white; font-weight: bold;">
+                <input type="radio" name="q8" value="3.66"> A) 3.66
+            </label>
+            <label style="display: block; padding: 12px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; background: white; font-weight: bold;">
+                <input type="radio" name="q8" value="3"> B) 3
+            </label>
+            <label style="display: block; padding: 12px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; background: white; font-weight: bold;">
+                <input type="radio" name="q8" value="2"> C) 2
+            </label>
+            <label style="display: block; padding: 12px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; background: white; font-weight: bold;">
+                <input type="radio" name="q8" value="1"> D) 1
+            </label>
+        </div>
+        <button class="interactive-btn" style="margin-top: 15px;" onclick="checkStage8()">Submit Answer</button>
+        <div id="feedback-8" class="feedback-msg"></div>
+
+        <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
+        <p><strong>Self-Assessment:</strong> How well can you use Modulus, Exponents, and PEMDAS?</p>
+        <div class="traffic-light">
+            <button class="tl-btn green" onclick="setTrafficLight(this, 'Independently')">🟢 Independently</button>
+            <button class="tl-btn yellow" onclick="setTrafficLight(this, 'With Help')">🟡 With Help</button>
+            <button class="tl-btn red" onclick="setTrafficLight(this, 'Need Practice')">🔴 Need Practice</button>
+        </div>
+        <input type="hidden" id="tl-status" value="Not set">
+    </div>
+
+    <!-- STAGE 9: FEEDBACK & ADJUSTMENT -->
+    <div class="stage-card" onclick="activateStage(9, 5)">
+        <div class="stage-header">
+            <h2 class="stage-title">STAGE 9: FEEDBACK & INSTRUCTIONAL ADJUSTMENT</h2>
+            <div class="timer" id="timer-9">⏱ 5:00</div>
+        </div>
+        
+        <div class="input-group" style="margin-bottom: 15px;">
+            <label>Explain in your own words what the Modulus (%) operator does:</label>
+            <textarea id="reflection1" rows="2" placeholder="The modulus operator..."></textarea>
+        </div>
+        
+        <div class="input-group">
+            <label>Which part of PEMDAS (Order of Operations) do you feel you still need to practice?</label>
+            <textarea id="reflection2" rows="2" placeholder="I need to practice..."></textarea>
+        </div>
+
+        <div class="input-group" style="margin-top: 15px; border-top: 2px dashed var(--border); padding-top: 15px;">
+            <label style="color: var(--danger);">Teacher Use Only: Instructional Adjustment</label>
+            <select id="teacherAdjustment" style="max-width: 300px;">
+                <option value="Pending">Pending Review</option>
+                <option value="Reteach">Reteach Modulus Concept (Draw the dots)</option>
+                <option value="Re-model">Re-model Floor Division vs Regular</option>
+                <option value="Regroup">Regroup for PEMDAS Practice</option>
+                <option value="Extend">Ready for Extension Task (x += 1)</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="dashboard" id="dashboard">
+        <h2>MISSION COMPLETE: Dashboard</h2>
+        <div class="dashboard-grid">
+            <div>
+                <strong>Student:</strong> <span id="dash-name">---</span><br>
+                <strong>Grade/Section:</strong> <span id="dash-grade">---</span> / <span id="dash-section">---</span><br>
+                <strong>Date:</strong> <span id="dash-date">---</span><br>
+                <strong>Final Score:</strong> <span id="dash-score">0</span> / 30<br>
+                <strong>Self-Assessment:</strong> <span id="dash-tl">Not set</span><br>
+                <strong>Teacher Adjustment:</strong> <span id="dash-adjust">Pending Review</span>
+            </div>
+            <div>
+                <strong>Time Spent per Stage:</strong>
+                <ul class="checklist" id="time-log" style="font-size: 0.85rem; font-family: monospace;">
+                    <li>Stage 1: <span id="log-1">0s</span></li>
+                    <li>Stage 2: <span id="log-2">0s</span></li>
+                    <li>Stage 3: <span id="log-3">0s</span></li>
+                    <li>Stage 4: <span id="log-4">0s</span></li>
+                    <li>Stage 5: <span id="log-5">0s</span></li>
+                    <li>Stage 6: <span id="log-6">0s</span></li>
+                    <li>Stage 7: <span id="log-7">0s</span></li>
+                    <li>Stage 8: <span id="log-8">0s</span></li>
+                    <li>Stage 9: <span id="log-9">0s</span></li>
+                </ul>
+            </div>
+        </div>
+        <button class="interactive-btn" style="width: 100%; margin-top: 20px; font-size: 1.2rem; background: var(--accent);" onclick="generatePDF()">🖨️ Export / Print to PDF</button>
+    </div>
+
+</div>
+
+<script>
+    // System Variables
+    let score = 0;
+    const maxScore = 30;
+    let completedStages = new Set();
+    
+    // Timer System
+    let stageTimers = {};
+    let activeIntervals = {};
+
+    function updateScore(points) {
+        score += points;
+        document.getElementById('ui-score').innerText = score;
+        document.getElementById('dash-score').innerText = score;
+    }
+
+    function activateStage(stageNum, minutes) {
+        if (stageTimers[stageNum]) return; // Already activated
+        
+        let seconds = minutes * 60;
+        let elapsed = 0;
+        let timerEl = document.getElementById('timer-' + stageNum);
+        let logEl = document.getElementById('log-' + stageNum);
+        
+        timerEl.classList.add('active');
+        stageTimers[stageNum] = true;
+
+        activeIntervals[stageNum] = setInterval(() => {
+            seconds--;
+            elapsed++;
+            
+            let m = Math.floor(seconds / 60);
+            let s = seconds % 60;
+            timerEl.innerText = `⏱ ${m}:${s.toString().padStart(2, '0')}`;
+            logEl.innerText = `${Math.floor(elapsed/60)}m ${elapsed%60}s`;
+
+            if (seconds <= 60 && seconds > 0) {
+                timerEl.classList.add('warning');
+            }
+
+            if (seconds <= 0) {
+                clearInterval(activeIntervals[stageNum]);
+                timerEl.innerText = "⏱ Time Up";
+                timerEl.classList.remove('warning');
+                timerEl.style.background = 'var(--danger)';
+            }
+        }, 1000);
+    }
+
+    // Stage 1 Logic (5 points)
+    function checkStage1(btn, value) {
+        if(completedStages.has(1)) return;
+        
+        let btns = document.getElementById('stage1-options').children;
+        for(let b of btns) b.classList.remove('selected', 'correct', 'incorrect');
+        
+        btn.classList.add('selected');
+        let fb = document.getElementById('feedback-1');
+        
+        if(value === '%') {
+            btn.classList.add('correct');
+            fb.innerHTML = "✅ Correct! In programming, the `%` symbol does NOT mean percentage! It is called the 'Modulus' operator, and it finds the remainder of division.";
+            fb.className = "feedback-msg success";
+            updateScore(5);
+            completedStages.add(1);
+        } else {
+            btn.classList.add('incorrect');
+            fb.innerHTML = "❌ Not quite. That is a standard elementary math operator. Look for the one that might mean something different in programming!";
+            fb.className = "feedback-msg error";
+            // allow retry
+        }
+    }
+
+    // Stage 3 Logic (5 points)
+    function checkStage3() {
+        if(completedStages.has(3)) return;
+        let v1 = document.getElementById('v1').value;
+        let v2 = document.getElementById('v2').value;
+        let v3 = document.getElementById('v3').value;
+        let fb = document.getElementById('feedback-3');
+
+        if(v1 === 'compare' && v2 === 'distinguish' && v3 === 'conclusion') {
+            fb.innerHTML = "✅ Excellent Code Logic! You successfully compared the operators and drew the right conclusion.";
+            fb.className = "feedback-msg success";
+            updateScore(5);
+            completedStages.add(3);
+        } else {
+            fb.innerHTML = "❌ Keep trying. Hint: We 'compare' two things to 'distinguish' differences, leading to a final 'conclusion'.";
+            fb.className = "feedback-msg error";
+        }
+    }
+
+    // Stage 5 Logic (Teacher Model Reveal)
+    let modelStep = 1;
+    function revealModelStep() {
+        if (modelStep <= 3) {
+            document.getElementById('trace-' + modelStep).style.display = "block";
+            modelStep++;
+            if(modelStep > 3) {
+                document.getElementById('btn-model').style.display = 'none';
+            }
+        }
+    }
+
+    // Stage 6 Logic (10 points)
+    function checkStage6() {
+        if(completedStages.has(6)) return;
+        let gp1 = document.getElementById('gp1').value;
+        let gp2 = document.getElementById('gp2').value;
+        let gp3 = document.getElementById('gp3').value;
+        let fb = document.getElementById('feedback-6');
+
+        if(gp1 === '()' && gp2 === '*' && gp3 === '//') {
+            fb.innerHTML = "✅ Perfect execution! Parentheses first, then we resolve Multiplication and Floor Division left-to-right. The final answer is 12!";
+            fb.className = "feedback-msg success";
+            updateScore(10);
+            completedStages.add(6);
+        } else {
+            fb.innerHTML = "❌ Not quite in the right order. Remember: Parentheses win first. Multiplication and division are tied, so you MUST read them left-to-right like a book.";
+            fb.className = "feedback-msg error";
+        }
+    }
+
+    // Stage 7 Logic (5 points)
+    function checkStage7() {
+        let code = document.getElementById('stage7-code').value;
+        let fb = document.getElementById('feedback-7');
+        
+        let hasFloor = code.includes('//');
+        let hasMod = code.includes('%');
+        let hasExp = code.includes('**');
+        let hasPrint = code.includes('print');
+
+        if ((hasFloor || hasMod) && hasPrint) {
+            fb.innerHTML = "✅ Great logic detected! You successfully implemented advanced operators and the print command.";
+            fb.className = "feedback-msg success";
+            if(!completedStages.has(7)) {
+                updateScore(5);
+                completedStages.add(7);
+            }
+        } else {
+            fb.innerHTML = "❌ Code Analysis: Missing required elements. Make sure you are using // or %, and outputting results with 'print()'.";
+            fb.className = "feedback-msg error";
+        }
+    }
+
+    // Stage 8 Logic (5 points)
+    function checkStage8() {
+        if(completedStages.has(8)) return;
+        let selected = document.querySelector('input[name="q8"]:checked');
+        let fb = document.getElementById('feedback-8');
+
+        if(!selected) {
+            fb.innerHTML = "Please select an answer.";
+            fb.className = "feedback-msg error";
+            return;
+        }
+
+        if(selected.value === '2') {
+            fb.innerHTML = "✅ Correct! Modulus (%) asks for the leftovers. 3 goes into 11 three times (which is 9), leaving a remainder of 2!";
+            fb.className = "feedback-msg success";
+            updateScore(5);
+        } else if (selected.value === '3') {
+            fb.innerHTML = "❌ Incorrect. You selected the answer for FLOOR DIVISION (11 // 3). Modulus (%) wants the remainder.";
+            fb.className = "feedback-msg error";
+            updateScore(1);
+        } else if (selected.value === '3.66') {
+            fb.innerHTML = "❌ Incorrect. You selected the answer for REGULAR DIVISION (11 / 3). Modulus (%) wants the remainder.";
+            fb.className = "feedback-msg error";
+            updateScore(1);
+        } else {
+            fb.innerHTML = "❌ Incorrect. Modulus (%) finds the remainder. 3 fits into 11 three times (9). 11 minus 9 is 2.";
+            fb.className = "feedback-msg error";
+            updateScore(1);
+        }
+        completedStages.add(8);
+    }
+
+    function setTrafficLight(btn, status) {
+        let btns = document.querySelectorAll('.tl-btn');
+        btns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tl-status').value = status;
+        document.getElementById('dash-tl').innerText = status;
+    }
+
+    // Live Dashboard Updating & Print Pre-processor
+    function updateDashboardInfo() {
+        document.getElementById('dash-name').innerText = document.getElementById('studentName').value || "Not provided";
+        document.getElementById('dash-grade').innerText = document.getElementById('studentGrade').value || "N/A";
+        document.getElementById('dash-section').innerText = document.getElementById('studentSection').value || "N/A";
+        document.getElementById('dash-date').innerText = document.getElementById('lessonDate').value || "N/A";
+        document.getElementById('dash-adjust').innerText = document.getElementById('teacherAdjustment').options[document.getElementById('teacherAdjustment').selectedIndex].text;
+        
+        // Ensure textareas render their text in print view (safeguard for some browsers)
+        document.querySelectorAll('textarea').forEach(t => {
+            t.textContent = t.value; 
+        });
+    }
+
+    // Bind inputs to dashboard updates
+    document.getElementById('studentName').addEventListener('input', updateDashboardInfo);
+    document.getElementById('studentGrade').addEventListener('change', updateDashboardInfo);
+    document.getElementById('studentSection').addEventListener('change', updateDashboardInfo);
+    document.getElementById('lessonDate').addEventListener('change', updateDashboardInfo);
+    document.getElementById('teacherAdjustment').addEventListener('change', updateDashboardInfo);
+
+    function generatePDF() {
+        updateDashboardInfo();
+        // Pause timers for printing
+        for(let t in activeIntervals) clearInterval(activeIntervals[t]);
+        window.print();
+    }
+</script>
+
+</body>
+</html>
